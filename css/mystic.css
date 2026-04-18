@@ -1,12 +1,14 @@
 /* ==========================================================================
-   mystic.css — thème Oracle (scenes 1 & 2).
+   mystic.css — thème Oracle (scenes 1 & 2). Mobile-first.
    ========================================================================== */
 
 :root {
   --mystic-bg-1: #0b0420;
   --mystic-bg-2: #1a0638;
+  --mystic-bg-deep: #05010f;
   --mystic-accent: #c084fc;
   --mystic-accent-2: #f0abfc;
+  --mystic-accent-3: #60a5fa;
   --mystic-text: #e9d5ff;
   --mystic-text-dim: #a78bda;
   --font-mystic: 'Cinzel', 'Cormorant Garamond', 'Georgia', serif;
@@ -21,63 +23,73 @@ html, body {
   font-family: var(--font-mystic);
   color: var(--mystic-text);
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body[data-state="oracle"],
 body[data-state="trance"] {
-  background:
-    radial-gradient(ellipse at 50% 20%, var(--mystic-bg-2) 0%, var(--mystic-bg-1) 60%, #000 100%);
+  background: radial-gradient(ellipse at 50% 20%, var(--mystic-bg-2) 0%, var(--mystic-bg-1) 55%, var(--mystic-bg-deep) 100%);
 }
 
-/* Étoiles scintillantes en arrière-plan */
+/* =========== Étoiles + nébuleuse (fond animé) =========== */
 #stars {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-image:
     radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.8), transparent 50%),
     radial-gradient(1px 1px at 60% 80%, rgba(255,255,255,.6), transparent 50%),
     radial-gradient(2px 2px at 80% 20%, rgba(240,171,252,.8), transparent 50%),
     radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.7), transparent 50%),
     radial-gradient(1px 1px at 90% 50%, rgba(192,132,252,.7), transparent 50%),
-    radial-gradient(1px 1px at 10% 90%, rgba(255,255,255,.5), transparent 50%);
-  background-size: 100% 100%;
+    radial-gradient(1px 1px at 10% 90%, rgba(255,255,255,.5), transparent 50%),
+    radial-gradient(1px 1px at 45% 15%, rgba(255,255,255,.6), transparent 50%),
+    radial-gradient(1.5px 1.5px at 70% 60%, rgba(240,171,252,.5), transparent 50%);
   animation: twinkle 6s ease-in-out infinite alternate;
 }
-@keyframes twinkle {
-  from { opacity: .55; }
-  to   { opacity: 1;   }
+#nebula {
+  position: fixed; inset: -20%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(192,132,252,.18), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(96,165,250,.12),  transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(240,171,252,.10), transparent 50%);
+  filter: blur(40px);
+  animation: nebulaDrift 30s ease-in-out infinite alternate;
+}
+body[data-state="reveal"] #stars,
+body[data-state="reveal"] #nebula { display: none; }
+
+@keyframes twinkle { from { opacity: .55; } to { opacity: 1; } }
+@keyframes nebulaDrift {
+  from { transform: translate(0,   0)    scale(1);    }
+  to   { transform: translate(-3%, 2%)   scale(1.08); }
 }
 
-body[data-state="reveal"] #stars { display: none; }
-
-/* ---- Layout des scènes ---- */
+/* =========== Layout des scènes =========== */
 .scene {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 2rem 1.25rem;
   text-align: center;
-  animation: fadeIn .8s ease;
 }
 .scene[hidden] { display: none; }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: none;             }
+
+/* =================== SCÈNE 1 : l'antre =================== */
+#scene-oracle { animation: fadeInUp 1s ease; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
 }
 
-/* ---- Scène 1 : l'orbe et l'accroche ---- */
 .orb {
-  width: 220px;
-  height: 220px;
+  width: min(52vw, 260px);
+  aspect-ratio: 1;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 30%, var(--mystic-accent-2) 0%, var(--mystic-accent) 40%, #4c1d95 80%);
+  background: radial-gradient(circle at 30% 30%, var(--mystic-accent-2) 0%, var(--mystic-accent) 40%, #4c1d95 80%);
   box-shadow:
     0 0 60px var(--mystic-accent),
     0 0 120px rgba(192,132,252,.4),
@@ -86,39 +98,42 @@ body[data-state="reveal"] #stars { display: none; }
   animation: orbPulse 4s ease-in-out infinite;
 }
 @keyframes orbPulse {
-  0%, 100% { transform: scale(1);    box-shadow: 0 0 60px var(--mystic-accent),  0 0 120px rgba(192,132,252,.4), inset -20px -20px 60px rgba(0,0,0,.5); }
-  50%      { transform: scale(1.05); box-shadow: 0 0 90px var(--mystic-accent-2),0 0 160px rgba(240,171,252,.5), inset -20px -20px 60px rgba(0,0,0,.5); }
+  0%, 100% { transform: scale(1);    filter: brightness(1);   }
+  50%      { transform: scale(1.05); filter: brightness(1.15); }
 }
 
 .title {
-  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-size: clamp(2rem, 8vw, 3.5rem);
   letter-spacing: .15em;
   margin: 0 0 .5rem;
   text-shadow: 0 0 20px rgba(240,171,252,.6);
 }
 .subtitle {
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 3.5vw, 1.15rem);
   color: var(--mystic-text-dim);
-  max-width: 36ch;
+  max-width: 30ch;
   margin: 0 0 2.5rem;
   font-style: italic;
+  line-height: 1.5;
 }
 
 .mystic-btn {
   font-family: var(--font-mystic);
-  font-size: 1.1rem;
-  letter-spacing: .1em;
-  padding: 1rem 2.5rem;
+  font-size: 1.05rem;
+  letter-spacing: .08em;
+  padding: 1rem 2.25rem;
   color: var(--mystic-text);
-  background: linear-gradient(135deg, rgba(192,132,252,.2), rgba(240,171,252,.1));
+  background: linear-gradient(135deg, rgba(192,132,252,.2), rgba(240,171,252,.08));
   border: 1px solid var(--mystic-accent);
   border-radius: 999px;
   cursor: pointer;
   transition: all .3s ease;
   backdrop-filter: blur(10px);
+  min-height: 48px;
 }
+.mystic-btn:active { transform: scale(.98); }
 .mystic-btn:hover {
-  background: linear-gradient(135deg, rgba(192,132,252,.4), rgba(240,171,252,.3));
+  background: linear-gradient(135deg, rgba(192,132,252,.4), rgba(240,171,252,.2));
   box-shadow: 0 0 30px var(--mystic-accent);
   transform: translateY(-2px);
 }
@@ -131,38 +146,161 @@ body[data-state="reveal"] #stars { display: none; }
   opacity: .7;
 }
 
-/* ---- Scène 2 : la transe ---- */
-.trance-orb {
-  position: relative;
-  width: 260px;
-  height: 260px;
-  margin-bottom: 3rem;
-}
-.trance-orb .ring {
-  position: absolute;
+/* =================== SCÈNE 2 : la transe =================== */
+#scene-trance {
+  position: fixed;
   inset: 0;
-  border-radius: 50%;
-  border: 1px solid var(--mystic-accent);
-  opacity: .6;
+  padding: 0;
+  overflow: hidden;
+  justify-content: center;
+  animation: fadeIn .8s ease;
 }
-.ring-1 { animation: spin 8s linear infinite;          border-color: var(--mystic-accent); }
-.ring-2 { animation: spin 12s linear infinite reverse; inset: 20px; border-color: var(--mystic-accent-2); }
-.ring-3 { animation: spin 5s linear infinite;          inset: 50px; border-style: dashed; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---- Orbe centrale plus riche ---- */
+.trance-orb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(70vw, 360px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -55%);
+  pointer-events: none;
+}
+.orb-core {
+  position: absolute; inset: 28%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--mystic-accent-2), var(--mystic-accent) 45%, #4c1d95 85%);
+  box-shadow:
+    0 0 50px var(--mystic-accent),
+    0 0 90px rgba(192,132,252,.45),
+    inset -10px -10px 40px rgba(0,0,0,.5);
+  animation: orbBreath 3.5s ease-in-out infinite;
+}
+.orb-aura {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(192,132,252,.35) 0%, transparent 60%);
+  filter: blur(20px);
+  animation: auraPulse 4.5s ease-in-out infinite;
+}
+@keyframes orbBreath {
+  0%, 100% { transform: scale(1);    filter: hue-rotate(0deg)   brightness(1); }
+  50%      { transform: scale(1.08); filter: hue-rotate(-10deg) brightness(1.3); }
+}
+@keyframes auraPulse {
+  0%, 100% { transform: scale(1);   opacity: .7; }
+  50%      { transform: scale(1.2); opacity: 1;  }
+}
+
+.ring {
+  position: absolute;
+  border: 1px solid var(--mystic-accent);
+  border-radius: 50%;
+  opacity: .45;
+  box-shadow: 0 0 12px rgba(192,132,252,.4);
+}
+.ring-1 { inset: 0;     animation: spin 9s linear infinite;           }
+.ring-2 { inset: 10%;   animation: spin 14s linear infinite reverse;  border-color: var(--mystic-accent-2); border-style: dashed; }
+.ring-3 { inset: 22%;   animation: spin 6s linear infinite;           border-color: var(--mystic-accent-3); opacity: .3; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---- Constellation de glyphes tournants ---- */
+.trance-glyphs {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(85vw, 440px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -55%);
+  animation: spin 40s linear infinite;
+  pointer-events: none;
+}
+.glyph {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  color: var(--mystic-accent-2);
+  text-shadow:
+    0 0 8px var(--mystic-accent),
+    0 0 20px var(--mystic-accent);
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--i) * 60deg))
+    translateY(calc(-1 * min(40vw, 210px)))
+    rotate(calc(var(--i) * -60deg));
+  animation: glyphPulse 3s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -.5s);
+}
+@keyframes glyphPulse {
+  0%, 100% { opacity: .45; transform-origin: center; filter: blur(0); }
+  50%      { opacity: 1;                             filter: blur(.3px); }
+}
+/* Reparaméter glyphPulse ne casserait pas la rotation: on wrap via compose */
+.glyph {
+  animation: glyphTwinkle 3s ease-in-out infinite;
+}
+@keyframes glyphTwinkle {
+  0%, 100% { filter: drop-shadow(0 0 2px var(--mystic-accent));  opacity: .5; }
+  50%      { filter: drop-shadow(0 0 12px var(--mystic-accent-2)); opacity: 1; }
+}
+
+/* ---- Phrase mystique centrée, UNE à la fois, crossfade ---- */
 .trance-lines {
-  max-width: 40ch;
-  font-size: 1.3rem;
-  line-height: 1.8;
+  position: absolute;
+  bottom: max(14vh, 100px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(85vw, 30rem);
+  min-height: 7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.trance-line {
+  position: absolute;
+  margin: 0;
+  font-size: clamp(1.05rem, 4.3vw, 1.35rem);
   font-style: italic;
-  min-height: 8rem;
-}
-.trance-lines p {
-  opacity: 0;
+  line-height: 1.6;
+  text-shadow: 0 0 20px rgba(11,4,32,.9), 0 2px 8px rgba(0,0,0,.6);
   animation: lineIn 1s ease forwards;
-  margin: .5rem 0;
 }
+.trance-line.fading-out { animation: lineOut .6s ease forwards; }
 @keyframes lineIn {
-  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
-  to   { opacity: 1; transform: none;             filter: none;     }
+  from { opacity: 0; transform: translateY(14px) scale(.96); filter: blur(8px); }
+  to   { opacity: 1; transform: none;                         filter: none;     }
+}
+@keyframes lineOut {
+  from { opacity: 1; transform: none;                         filter: none;        }
+  to   { opacity: 0; transform: translateY(-14px) scale(1.02); filter: blur(6px); }
+}
+
+/* ---- Actions (bouton « Voir la vérité ») ---- */
+.trance-actions {
+  position: absolute;
+  bottom: max(4vh, 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.trance-actions .mystic-btn {
+  animation: revealIn 1.2s ease forwards;
+  transform-origin: center;
+}
+@keyframes revealIn {
+  from { opacity: 0; transform: scale(.8); }
+  to   { opacity: 1; transform: none;      }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb, .orb-core, .orb-aura, .ring, .trance-glyphs, .glyph, #stars, #nebula {
+    animation: none !important;
+  }
 }

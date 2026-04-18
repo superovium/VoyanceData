@@ -2,14 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0420" />
   <title>L'Oracle Numérique</title>
   <link rel="stylesheet" href="css/mystic.css" />
   <link rel="stylesheet" href="css/reveal.css" />
 </head>
 <body data-state="oracle">
-  <!-- Particules d'arrière-plan (étoiles) -->
   <div id="stars" aria-hidden="true"></div>
+  <div id="nebula" aria-hidden="true"></div>
 
   <!-- =================== ÉTAPE 1 : L'ANTRE =================== -->
   <section id="scene-oracle" class="scene">
@@ -17,19 +18,30 @@
     <h1 class="title">L'Oracle Numérique</h1>
     <p class="subtitle">Les voiles s'écartent pour ceux qui osent regarder.</p>
     <button id="btn-consult" class="mystic-btn">Consulter les astres</button>
-    <p class="disclaimer">
-      Silence… l'Oracle t'écoute déjà.
-    </p>
+    <p class="disclaimer">Silence… l'Oracle t'écoute déjà.</p>
   </section>
 
   <!-- =================== ÉTAPE 2 : LA TRANSE =================== -->
   <section id="scene-trance" class="scene" hidden>
-    <div class="trance-orb">
+    <div class="trance-glyphs" aria-hidden="true">
+      <span class="glyph" style="--i:0">☽</span>
+      <span class="glyph" style="--i:1">✦</span>
+      <span class="glyph" style="--i:2">⚹</span>
+      <span class="glyph" style="--i:3">☾</span>
+      <span class="glyph" style="--i:4">✧</span>
+      <span class="glyph" style="--i:5">⚜</span>
+    </div>
+
+    <div class="trance-orb" aria-hidden="true">
+      <div class="orb-aura"></div>
+      <div class="orb-core"></div>
       <div class="ring ring-1"></div>
       <div class="ring ring-2"></div>
       <div class="ring ring-3"></div>
     </div>
+
     <div id="trance-lines" class="trance-lines" aria-live="polite"></div>
+    <div id="trance-actions" class="trance-actions"></div>
   </section>
 
   <!-- =================== ÉTAPE 3 : LA RÉVÉLATION =================== -->
@@ -38,29 +50,32 @@
       <span class="dot red"></span>
       <span class="dot yellow"></span>
       <span class="dot green"></span>
-      <span class="terminal-title">oracle@voyance:~/profile.json</span>
+      <span class="terminal-title">oracle@voyance:~ $ cat /proc/toi</span>
     </header>
 
     <div class="reveal-intro">
-      <h2>Tu n'as rien dit. Et pourtant —</h2>
+      <h2>Tu n'as rien dit. <span class="em-dash">—</span> Et pourtant l'Oracle savait.</h2>
       <p>
         Aucun cookie. Aucun formulaire. Juste ton navigateur qui parle à qui sait écouter.
-        Voici ce que l'Oracle a réellement lu :
       </p>
     </div>
 
-    <div class="reveal-grid">
-      <div class="reveal-col">
-        <h3>#1 — Données brutes capturées</h3>
-        <pre id="reveal-raw" class="reveal-block"></pre>
-      </div>
-      <div class="reveal-col">
-        <h3>#2 — Score des personas</h3>
-        <div id="reveal-scores" class="reveal-block"></div>
+    <nav class="reveal-tabs" role="tablist">
+      <button class="tab active" data-tab="cards">Lecture</button>
+      <button class="tab" data-tab="persona">Portrait</button>
+      <button class="tab" data-tab="raw">JSON brut</button>
+    </nav>
 
-        <h3>#3 — Pourquoi l'Oracle t'a dit ça</h3>
-        <div id="reveal-explain" class="reveal-block"></div>
-      </div>
+    <div id="tab-cards" class="tab-panel active">
+      <div id="reveal-cards"></div>
+    </div>
+
+    <div id="tab-persona" class="tab-panel">
+      <div id="reveal-persona"></div>
+    </div>
+
+    <div id="tab-raw" class="tab-panel">
+      <pre id="reveal-raw" class="json-view" aria-label="Données brutes au format JSON"></pre>
     </div>
 
     <footer class="reveal-footer">
@@ -68,7 +83,7 @@
         Tout ce que tu viens de voir est <strong>public par défaut</strong>. Chaque site
         que tu visites peut faire la même chose, sans aucune autorisation.
       </p>
-      <button id="btn-restart" class="ghost-btn">Recommencer</button>
+      <button id="btn-restart" class="ghost-btn">Recommencer la transe</button>
     </footer>
   </section>
 
