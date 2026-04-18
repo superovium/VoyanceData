@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>L'Oracle Num\u00e9rique</title>
+  <link rel="stylesheet" href="css/mystic.css" />
+  <link rel="stylesheet" href="css/reveal.css" />
+</head>
+<body data-state="oracle">
+  <!-- Particules d'arri\u00e8re-plan (\u00e9toiles) -->
+  <div id="stars" aria-hidden="true"></div>
+
+  <!-- =================== \u00c9TAPE 1 : L'ANTRE =================== -->
+  <section id="scene-oracle" class="scene">
+    <div class="orb" aria-hidden="true"></div>
+    <h1 class="title">L'Oracle Num\u00e9rique</h1>
+    <p class="subtitle">Laisse les astres lire en toi ce que tu refuses de voir.</p>
+    <button id="btn-consult" class="mystic-btn">Consulter les astres</button>
+    <p class="disclaimer">
+      En continuant, tu acceptes de livrer ton \u00e2me\u2026 ou du moins, ce que ton navigateur en sait.
+    </p>
+  </section>
+
+  <!-- =================== \u00c9TAPE 2 : LA TRANSE =================== -->
+  <section id="scene-trance" class="scene" hidden>
+    <div class="trance-orb">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+    </div>
+    <div id="trance-lines" class="trance-lines" aria-live="polite"></div>
+  </section>
+
+  <!-- =================== \u00c9TAPE 3 : LA R\u00c9V\u00c9LATION =================== -->
+  <section id="scene-reveal" class="scene" hidden>
+    <header class="terminal-header">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+      <span class="terminal-title">oracle@voyance:~/profile.json</span>
+    </header>
+
+    <div class="reveal-intro">
+      <h2>Tu n'as rien dit. Et pourtant\u2014</h2>
+      <p>
+        Aucun cookie. Aucun formulaire. Juste ton navigateur qui parle \u00e0 qui sait \u00e9couter.
+        Voici ce que l'Oracle a r\u00e9ellement lu :
+      </p>
+    </div>
+
+    <div class="reveal-grid">
+      <div class="reveal-col">
+        <h3>#1 &mdash; Donn\u00e9es brutes captur\u00e9es</h3>
+        <pre id="reveal-raw" class="reveal-block"></pre>
+      </div>
+      <div class="reveal-col">
+        <h3>#2 &mdash; Score des personas</h3>
+        <div id="reveal-scores" class="reveal-block"></div>
+
+        <h3>#3 &mdash; Pourquoi l'Oracle t'a dit \u00e7a</h3>
+        <div id="reveal-explain" class="reveal-block"></div>
+      </div>
+    </div>
+
+    <footer class="reveal-footer">
+      <p>
+        Tout ce que tu viens de voir est <strong>public par d\u00e9faut</strong>. Chaque site
+        que tu visites peut faire la m\u00eame chose, sans aucune autorisation.
+      </p>
+      <button id="btn-restart" class="ghost-btn">Recommencer</button>
+    </footer>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

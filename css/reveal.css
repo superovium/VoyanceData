@@ -1,0 +1,167 @@
+/* ==========================================================================
+   reveal.css — thème "terminal clinique" (scene 3).
+   Activé uniquement quand body[data-state="reveal"] est posé.
+   ========================================================================== */
+
+:root {
+  --term-bg: #0d1117;
+  --term-panel: #161b22;
+  --term-border: #30363d;
+  --term-text: #c9d1d9;
+  --term-dim: #8b949e;
+  --term-accent: #58a6ff;
+  --term-success: #3fb950;
+  --term-warn: #d29922;
+  --term-danger: #f85149;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Menlo', 'Consolas', monospace;
+}
+
+body[data-state="reveal"] {
+  background: var(--term-bg);
+  color: var(--term-text);
+  font-family: var(--font-mono);
+}
+
+body[data-state="reveal"] #scene-reveal {
+  min-height: 100vh;
+  padding: 0;
+  text-align: left;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* ---- Barre de titre type IDE ---- */
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  background: var(--term-panel);
+  border-bottom: 1px solid var(--term-border);
+}
+.terminal-header .dot {
+  width: 12px; height: 12px; border-radius: 50%;
+}
+.dot.red    { background: var(--term-danger); }
+.dot.yellow { background: var(--term-warn); }
+.dot.green  { background: var(--term-success); }
+.terminal-title {
+  margin-left: .5rem;
+  font-size: .85rem;
+  color: var(--term-dim);
+}
+
+/* ---- Intro ---- */
+.reveal-intro {
+  padding: 2rem 2rem 1rem;
+  border-bottom: 1px solid var(--term-border);
+}
+.reveal-intro h2 {
+  margin: 0 0 .5rem;
+  color: var(--term-danger);
+  font-size: 1.4rem;
+}
+.reveal-intro p {
+  margin: 0;
+  color: var(--term-dim);
+  max-width: 70ch;
+}
+
+/* ---- Grille principale ---- */
+.reveal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem 2rem;
+}
+@media (max-width: 900px) {
+  .reveal-grid { grid-template-columns: 1fr; }
+}
+
+.reveal-col h3 {
+  font-size: .9rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--term-accent);
+  margin: 1rem 0 .5rem;
+}
+
+.reveal-block {
+  background: var(--term-panel);
+  border: 1px solid var(--term-border);
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: .85rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---- Scores ---- */
+.score-row {
+  display: grid;
+  grid-template-columns: 14ch 1fr 5ch;
+  align-items: center;
+  gap: .75rem;
+  margin: .5rem 0;
+  font-size: .85rem;
+}
+.score-row.winner { color: var(--term-success); font-weight: bold; }
+.score-bar {
+  height: 8px;
+  background: #0d1117;
+  border: 1px solid var(--term-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.score-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--term-accent), var(--term-success));
+  transition: width .6s ease;
+}
+
+/* ---- Explications ---- */
+.explain-item {
+  padding: .5rem .75rem;
+  margin: .35rem 0;
+  background: rgba(88,166,255,.06);
+  border-left: 3px solid var(--term-accent);
+  font-size: .85rem;
+}
+.explain-item .explain-rule { color: var(--term-warn); font-weight: bold; }
+.explain-item .explain-why  { color: var(--term-dim); margin-left: .5rem; }
+
+/* ---- Footer ---- */
+.reveal-footer {
+  padding: 2rem;
+  border-top: 1px solid var(--term-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.reveal-footer p {
+  max-width: 60ch;
+  color: var(--term-dim);
+  margin: 0;
+}
+.reveal-footer strong { color: var(--term-danger); }
+
+.ghost-btn {
+  font-family: var(--font-mono);
+  font-size: .9rem;
+  padding: .5rem 1.25rem;
+  background: transparent;
+  color: var(--term-accent);
+  border: 1px solid var(--term-accent);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.ghost-btn:hover {
+  background: var(--term-accent);
+  color: var(--term-bg);
+}

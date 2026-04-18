@@ -64,12 +64,210 @@ const NIGHT_OWL = {
 };
 
 // ---------------------------------------------------------------------------
-// Stubs — à remplir lors des prochaines itérations.
+// Persona : LE VOYAGEUR / L'EXILÉ
+// Signaux : langue du navigateur <> pays IP, fuseau <> fuseau IP,
+// multi-langues dans navigator.languages.
 // ---------------------------------------------------------------------------
-const TRAVELER     = { id: 'traveler',    label: 'L\u2019Exil\u00e9',     tagline: 'Celui dont la langue trahit le lieu',   rules: [] };
-const PRIVILEGED   = { id: 'privileged',  label: 'Le Privil\u00e9gi\u00e9', tagline: 'Celui dont les pixels valent de l\u2019or', rules: [] };
-const GAMER        = { id: 'gamer',       label: 'Le Chasseur',         tagline: 'Celui qui vit \u00e0 144 images par seconde',  rules: [] };
-const WORKER       = { id: 'worker',      label: 'Le For\u00e7at',       tagline: 'Celui dont les fen\u00eatres sont trop petites',  rules: [] };
+const LANG_TO_COUNTRIES = {
+  fr: ['FR', 'BE', 'CH', 'LU', 'MC', 'CA'],
+  en: ['US', 'GB', 'IE', 'AU', 'NZ', 'CA', 'ZA'],
+  de: ['DE', 'AT', 'CH', 'LI'],
+  es: ['ES', 'MX', 'AR', 'CL', 'CO', 'PE', 'VE', 'UY'],
+  pt: ['PT', 'BR', 'AO', 'MZ'],
+  it: ['IT', 'CH', 'SM'],
+  nl: ['NL', 'BE'],
+  ja: ['JP'],
+  ko: ['KR'],
+  zh: ['CN', 'TW', 'HK', 'SG'],
+  ar: ['SA', 'AE', 'EG', 'MA', 'DZ', 'TN', 'JO', 'LB'],
+  ru: ['RU', 'BY', 'KZ'],
+  pl: ['PL'],
+  tr: ['TR'],
+};
+
+const TRAVELER = {
+  id: 'traveler',
+  label: 'L\u2019Exil\u00e9',
+  tagline: 'Celui dont la langue trahit le lieu',
+  rules: [
+    rule('lang_country_mismatch', 40, (d) => {
+      const lang = d.browser?.language?.slice(0, 2).toLowerCase();
+      const country = d.network?.countryCode;
+      if (!lang || !country) return 0;
+      const expected = LANG_TO_COUNTRIES[lang];
+      if (!expected) return 0;
+      return expected.includes(country) ? 0 : 1;
+    }),
+
+    rule('timezone_country_mismatch', 30, (d) => {
+      const tz = d.locale?.timezone;
+      const country = d.network?.countryCode;
+      if (!tz || !country) return 0;
+      // Heuristique simple : le préfixe continent du fuseau doit matcher
+      // grossièrement la région du pays IP. Approximation volontaire.
+      const continent = tz.split('/')[0];
+      const euCountries = ['FR','DE','ES','IT','GB','BE','NL','PT','CH','AT','SE','NO','FI','DK','PL','CZ'];
+      const usCountries = ['US','CA','MX'];
+      const asiaCountries = ['JP','CN','KR','TW','HK','SG','IN','TH','VN'];
+      if (euCountries.includes(country) && continent !== 'Europe') return 1;
+      if (usCountries.includes(country) && continent !== 'America') return 1;
+      if (asiaCountries.includes(country) && continent !== 'Asia') return 1;
+      return 0;
+    }),
+
+    rule('polyglot', 15, (d) => {
+      const langs = d.browser?.languages ?? [];
+      // 3+ langues déclarées = profil migrant / multilingue de naissance
+      if (langs.length >= 3) return 1;
+      if (langs.length === 2) return 0.5;
+      return 0;
+    }),
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// Persona : LE PRIVILÉGIÉ
+// Signaux : appareil Apple / haut de gamme, écran haute densité, beaucoup de
+// RAM et de cœurs CPU.
+// ---------------------------------------------------------------------------
+const PRIVILEGED = {
+  id: 'privileged',
+  label: 'Le Privil\u00e9gi\u00e9',
+  tagline: 'Celui dont les pixels valent de l\u2019or',
+  rules: [
+    rule('apple_device', 30, (d) => {
+      const ua = (d.browser?.userAgent ?? '').toLowerCase();
+      if (ua.includes('iphone') || ua.includes('ipad')) return 1;
+      if (ua.includes('macintosh') || ua.includes('mac os')) return 1;
+      return 0;
+    }),
+
+    rule('high_dpi', 20, (d) => {
+      const dpr = d.display?.pixelRatio ?? 1;
+      if (dpr >= 3) return 1;
+      if (dpr >= 2) return 0.6;
+      return 0;
+    }),
+
+    rule('big_screen', 15, (d) => {
+      const w = d.display?.screenW ?? 0;
+      if (w >= 2560) return 1;             // 4K / ultrawide / Studio Display
+      if (w >= 1920) return 0.5;
+      return 0;
+    }),
+
+    rule('rich_hardware', 20, (d) => {
+      const cores = d.browser?.hardwareConcurrency ?? 0;
+      const mem = d.browser?.deviceMemory ?? 0;
+      let s = 0;
+      if (cores >= 10) s += 0.5;
+      else if (cores >= 8) s += 0.3;
+      if (mem >= 8) s += 0.5;
+      else if (mem >= 4) s += 0.2;
+      return Math.min(s, 1);
+    }),
+
+    rule('fast_connection', 10, (d) => {
+      if (d.connection?.effectiveType === '4g' && d.connection?.downlink >= 10) return 1;
+      return 0;
+    }),
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// Persona : LE GAMER / CHASSEUR
+// Signaux : écran haute fréquence, GPU dédié, CPU musclé.
+// ---------------------------------------------------------------------------
+const GAMER = {
+  id: 'gamer',
+  label: 'Le Chasseur',
+  tagline: 'Celui qui vit \u00e0 144 images par seconde',
+  rules: [
+    rule('high_refresh', 40, (d) => {
+      const hz = d.display?.refreshHz ?? 60;
+      if (hz >= 140) return 1;
+      if (hz >= 110) return 0.8;
+      if (hz >= 85)  return 0.3;
+      return 0;
+    }),
+
+    rule('dedicated_gpu', 35, (d) => {
+      const r = (d.gpu?.renderer ?? '').toLowerCase();
+      if (!r) return 0;
+      if (r.includes('geforce') || r.includes('nvidia')) return 1;
+      if (r.includes('radeon')  || r.includes('amd'))    return 1;
+      if (r.includes('intel'))   return 0;                // iGPU
+      return 0;
+    }),
+
+    rule('many_cores', 15, (d) => {
+      const cores = d.browser?.hardwareConcurrency ?? 0;
+      if (cores >= 12) return 1;
+      if (cores >= 8)  return 0.5;
+      return 0;
+    }),
+
+    rule('desktop_os', 10, (d) => {
+      const ua = (d.browser?.userAgent ?? '').toLowerCase();
+      if (ua.includes('windows nt')) return 1;             // la plateforme gaming PC par excellence
+      if (ua.includes('linux') && !ua.includes('android')) return 0.7;
+      return 0;
+    }),
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// Persona : LE TRAVAILLEUR / FORÇAT
+// Signaux : jour ouvré + horaire bureau, desktop, fenêtre en multitâche.
+// ---------------------------------------------------------------------------
+const WORKER = {
+  id: 'worker',
+  label: 'Le For\u00e7at',
+  tagline: 'Celui dont les fen\u00eatres sont trop petites',
+  rules: [
+    rule('office_hours', 35, (d) => {
+      const h = d.locale?.localHour;
+      const day = d.locale?.dayOfWeek;
+      if (h == null || day == null) return 0;
+      const isWeekday = day >= 1 && day <= 5;
+      if (!isWeekday) return 0;
+      if (h >= 9 && h < 12) return 1;
+      if (h >= 14 && h < 18) return 1;
+      if (h === 12 || h === 13) return 0.4;    // pause déj
+      if (h === 8 || h === 18) return 0.5;
+      return 0;
+    }),
+
+    rule('desktop_device', 20, (d) => {
+      const ua = (d.browser?.userAgent ?? '').toLowerCase();
+      if (ua.includes('mobile') || ua.includes('android')) return 0;
+      if (ua.includes('iphone') || ua.includes('ipad'))    return 0;
+      return 1;
+    }),
+
+    rule('multitasking_window', 25, (d) => {
+      const sw = d.display?.screenW ?? 0;
+      const ww = d.display?.windowW ?? 0;
+      if (!sw || !ww) return 0;
+      const ratio = ww / sw;
+      // Fenêtre qui n'occupe pas tout l'écran = split-screen / multitâche
+      if (ratio < 0.55) return 1;
+      if (ratio < 0.75) return 0.6;
+      if (ratio < 0.95) return 0.2;
+      return 0;
+    }),
+
+    rule('plugged_in', 10, (d) => {
+      // Au bureau, branché au secteur
+      if (d.battery?.charging === true) return 1;
+      return 0;
+    }),
+
+    rule('not_dark_mode', 10, (d) =>
+      d.preferences?.darkMode === false ? 1 : 0
+    ),
+  ],
+};
 
 const PERSONAS = [NIGHT_OWL, TRAVELER, PRIVILEGED, GAMER, WORKER];
 
