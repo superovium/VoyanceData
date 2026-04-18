@@ -212,9 +212,12 @@ body[data-state="reveal"] #nebula { display: none; }
   left: 50%;
   width: min(85vw, 440px);
   aspect-ratio: 1;
-  transform: translate(-50%, -55%);
-  animation: spin 40s linear infinite;
+  animation: glyphsOrbit 40s linear infinite;
   pointer-events: none;
+}
+@keyframes glyphsOrbit {
+  from { transform: translate(-50%, -55%) rotate(0deg);   }
+  to   { transform: translate(-50%, -55%) rotate(360deg); }
 }
 .glyph {
   position: absolute;
