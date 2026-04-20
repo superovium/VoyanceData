@@ -325,6 +325,256 @@ body[data-state="reveal"] #scene-reveal {
 .explain-item .explain-rule { color: var(--rv-amber); font-weight: bold; }
 .explain-item .explain-why  { color: var(--rv-dim); margin-left: .4rem; font-size: .78rem; }
 
+/* ==========================================================================
+   Psychométrie : Big Five, Westin, chronotype, profil conso
+   ========================================================================== */
+
+.psy-panel {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--rv-border);
+}
+
+.psy-section {
+  background: linear-gradient(180deg, var(--rv-panel) 0%, var(--rv-panel-2) 100%);
+  border: 1px solid var(--rv-border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin: 0 0 1rem;
+  position: relative;
+}
+.psy-section h3 {
+  font-family: 'Cinzel', serif;
+  font-size: .95rem;
+  letter-spacing: .08em;
+  color: var(--rv-accent-2);
+  margin: 0 0 .85rem;
+  text-transform: uppercase;
+}
+.psy-section h3 .psy-sub {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--rv-dim);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: .4rem;
+}
+
+.psy-footnote, .psy-warning, .psy-text {
+  margin: .5rem 0 0;
+  color: var(--rv-dim);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+.psy-warning {
+  padding: .6rem .8rem;
+  border-left: 3px solid var(--rv-amber);
+  background: rgba(251, 191, 36, .06);
+  color: var(--rv-text);
+  border-radius: 0 6px 6px 0;
+}
+.psy-warning strong { color: var(--rv-amber); }
+.psy-empty {
+  color: var(--rv-dim);
+  font-style: italic;
+  font-size: .85rem;
+}
+
+/* ---- Big Five bars centrées ---- */
+.ocean-grid { display: grid; gap: .65rem; }
+.ocean-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr 4rem;
+  grid-template-rows: auto auto;
+  column-gap: .7rem;
+  align-items: center;
+  font-size: .82rem;
+}
+.ocean-row.strong .ocean-label { color: var(--rv-accent-2); font-weight: bold; }
+.ocean-label {
+  grid-row: 1;
+  color: var(--rv-text);
+  font-family: 'Cinzel', serif;
+  letter-spacing: .05em;
+}
+.ocean-track {
+  grid-row: 1;
+  grid-column: 2;
+  position: relative;
+  height: 10px;
+  background: var(--rv-bg);
+  border: 1px solid var(--rv-border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.ocean-axis {
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--rv-border-hl);
+  opacity: .6;
+}
+.ocean-fill {
+  position: absolute;
+  top: 0; bottom: 0;
+  transition: width .8s ease;
+}
+.ocean-fill.pos { background: linear-gradient(90deg, var(--rv-accent), var(--rv-accent-2)); box-shadow: 0 0 10px var(--rv-accent); }
+.ocean-fill.neg { background: linear-gradient(270deg, var(--rv-blue), #2563eb); box-shadow: 0 0 10px var(--rv-blue); }
+.ocean-z {
+  grid-row: 1;
+  grid-column: 3;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-dim);
+  font-size: .78rem;
+}
+.ocean-desc {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  color: var(--rv-dim);
+  font-size: .74rem;
+  font-style: italic;
+  padding-left: .1rem;
+}
+
+/* ---- Ligne Westin + Chrono ---- */
+.psy-row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .psy-row { grid-template-columns: 1fr 1fr; }
+}
+
+.psy-badge {
+  display: inline-block;
+  padding: .35rem 1rem;
+  font-size: .8rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: .06em;
+  border-radius: 999px;
+  background: rgba(124,58,237,.18);
+  border: 1px solid var(--rv-border-hl);
+  color: var(--rv-accent-2);
+  margin-bottom: .4rem;
+}
+.psy-badge.psy-westin-fundamentalist { background: rgba(74,222,128,.14); border-color: var(--rv-green); color: var(--rv-green); }
+.psy-badge.psy-westin-pragmatist     { background: rgba(251,191,36,.14); border-color: var(--rv-amber); color: var(--rv-amber); }
+.psy-badge.psy-westin-unconcerned    { background: rgba(248,113,113,.14); border-color: var(--rv-red);  color: var(--rv-red); }
+.psy-badge.psy-chrono-extreme_evening,
+.psy-badge.psy-chrono-evening        { background: rgba(96,165,250,.15); border-color: var(--rv-blue); color: var(--rv-blue); }
+
+/* ---- Profil consommateur ---- */
+.psy-consumer-block {
+  padding: .8rem .9rem;
+  margin: .55rem 0;
+  background: rgba(96,165,250,.05);
+  border-left: 3px solid var(--rv-blue);
+  border-radius: 0 8px 8px 0;
+}
+.psy-consumer-block h4 {
+  margin: 0 0 .5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: 'Cinzel', serif;
+  font-size: .85rem;
+  color: var(--rv-accent-2);
+  letter-spacing: .06em;
+}
+.psy-consumer-block h4 .psy-z {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--rv-dim);
+  letter-spacing: 0;
+}
+.psy-chip-group {
+  margin: .35rem 0;
+  line-height: 1.9;
+}
+.psy-chip-label {
+  font-size: .72rem;
+  color: var(--rv-dim);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-right: .3rem;
+}
+.psy-chip {
+  display: inline-block;
+  padding: .15rem .55rem;
+  margin: 0 .25rem .25rem 0;
+  border-radius: 4px;
+  font-size: .75rem;
+  line-height: 1.4;
+}
+.psy-chip-like  { background: rgba(192,132,252,.14); color: var(--rv-accent-2); border: 1px solid rgba(124,58,237,.35); }
+.psy-chip-brand { background: rgba(96,165,250,.14); color: var(--rv-blue);      border: 1px solid rgba(96,165,250,.35); }
+
+/* ---- Signaux détectés (dépliables) ---- */
+.psy-signal {
+  background: rgba(124,58,237,.04);
+  border: 1px solid var(--rv-border);
+  border-radius: 6px;
+  margin: .35rem 0;
+  overflow: hidden;
+}
+.psy-signal > summary {
+  cursor: pointer;
+  padding: .55rem .8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .82rem;
+  list-style: none;
+}
+.psy-signal > summary::-webkit-details-marker { display: none; }
+.psy-signal > summary::before {
+  content: '▸';
+  color: var(--rv-accent);
+  margin-right: .5rem;
+  transition: transform .2s ease;
+  display: inline-block;
+}
+.psy-signal[open] > summary::before { transform: rotate(90deg); }
+.psy-sig-label { color: var(--rv-text); }
+.psy-sig-strength {
+  color: var(--rv-accent-2);
+  font-variant-numeric: tabular-nums;
+  font-size: .78rem;
+}
+.psy-sig-body {
+  padding: 0 .8rem .7rem 1.6rem;
+  font-size: .78rem;
+}
+.psy-sig-effects {
+  margin: .2rem 0 .4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+.psy-eff {
+  padding: .1rem .45rem;
+  border-radius: 3px;
+  font-size: .72rem;
+  font-family: var(--font-mono);
+}
+.psy-eff-pos { background: rgba(192,132,252,.14); color: var(--rv-accent-2); }
+.psy-eff-neg { background: rgba(96,165,250,.14);  color: var(--rv-blue); }
+
+/* ---- Citations sources ---- */
+.psy-source {
+  display: block;
+  margin-top: .5rem;
+  font-style: italic;
+  font-size: .72rem;
+  color: var(--rv-dim);
+  font-family: var(--font-mono);
+  border-top: 1px dotted var(--rv-border);
+  padding-top: .4rem;
+}
+
 /* ---- JSON view coloré ---- */
 .json-view {
   background: var(--rv-panel);

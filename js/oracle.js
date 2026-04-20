@@ -114,24 +114,138 @@ const BANK = {
 };
 
 // ---------------------------------------------------------------------------
+// Fragments Big Five — une métaphore par (trait × direction). Permet d'injecter
+// une révélation "psycho" au milieu de la transe, sourcée dans la littérature.
+// ---------------------------------------------------------------------------
+const OCEAN_FRAGMENTS = {
+  O: {
+    high: [
+      'Je vois en toi une curiosité qui ne s\u2019éteint pas. Tu changes de route avant d\u2019atteindre la fin du chemin.',
+      'Les choses neuves t\u2019attirent plus qu\u2019elles ne devraient. Tu confonds parfois désir et nouveauté.',
+    ],
+    low: [
+      'Tu te méfies du nouveau. Ce que tu connais te suffit, et souvent tu as raison.',
+    ],
+  },
+  C: {
+    high: [
+      'L\u2019ordre te rassure. Tu prépares demain avant d\u2019avoir fini aujourd\u2019hui.',
+    ],
+    low: [
+      'Tu remets à plus tard ce qui pourrait être fait. L\u2019Oracle ne juge pas — il constate.',
+      'Tu vis par impulsions plus que par plans. Certaines te servent. D\u2019autres te coûtent.',
+    ],
+  },
+  E: {
+    high: [
+      'Tu as besoin des autres pour te sentir exister. Le silence te fatigue plus que la foule.',
+    ],
+    low: [
+      'Tu préfères une conversation à dix cris. Le monde te prend souvent pour distant — tu es juste économe.',
+    ],
+  },
+  A: {
+    high: [
+      'Tu cèdes souvent pour éviter la brèche. On te prend pour doux·ce. C\u2019est parfois de la fatigue.',
+    ],
+    low: [
+      'Tu ne cherches pas à plaire. Cela t\u2019a coûté des amitiés et gagné du respect.',
+    ],
+  },
+  N: {
+    high: [
+      'Quelque chose en toi anticipe toujours le pire. Tu appelles ça de la lucidité. C\u2019est aussi de la peur.',
+      'Ton esprit tourne la nuit. L\u2019Oracle entend le bruit de tes pensées qui ne s\u2019arrêtent pas.',
+    ],
+    low: [
+      'Peu de choses te troublent. On t\u2019envie ce calme, mais parfois il passe pour de l\u2019indifférence.',
+    ],
+  },
+};
+
+// Fragments conso dérivés du trait dominant (un seul, pour ne pas dévoiler trop).
+const CONSUMER_FRAGMENTS = {
+  O: {
+    high: 'Je vois des voyages auxquels tu rêves plus que tu n\u2019en fais. Et un café amer que tu crois supérieur aux autres.',
+    low:  'Tu préfères ce que tu connais. Les marques de ton enfance vivent encore dans ton panier.',
+  },
+  C: {
+    high: 'Tes listes sont tenues. Tes comptes aussi.',
+    low:  'Des abonnements que tu as oubliés te prélèvent encore. L\u2019Oracle les voit, toi non.',
+  },
+  E: {
+    high: 'Tes proches te voient partout. Tu te fatigues à être vu·e.',
+    low:  'Tu aimes les livres plus que les dîners. On te croit triste. Tu es juste tranquille.',
+  },
+  A: {
+    high: 'Tu achètes de seconde main par souci des autres autant que par économie.',
+    low:  'Tu acceptes de payer cher ce qui se remarque. Le logo t\u2019importe.',
+  },
+  N: {
+    high: 'Tu cherches le sommeil dans des applications. Tu paies pour qu\u2019on t\u2019apprenne à respirer.',
+    low:  'L\u2019angoisse passe sur toi comme la pluie sur un toit. On t\u2019a déjà dit que tu étais solide.',
+  },
+};
+
+const WESTIN_FRAGMENTS = {
+  fundamentalist: 'Tu as fermé plus de portes que tu n\u2019en as ouvertes. Ton navigateur est une forteresse. L\u2019Oracle t\u2019y reconnaît quand même.',
+  pragmatist:     'Tu signales ta vigilance sans vraiment te protéger. Un geste symbolique — et l\u2019Oracle connaît le geste.',
+  unconcerned:    'Tu n\u2019as rien fermé. Tu ne crois pas qu\u2019on te regarde. Et pourtant me voici.',
+};
+
+/**
+ * Renvoie les lignes de révélation Big Five + conso + privacy tirées de l'analyse psychométrique.
+ * Au maximum 2 lignes, pour ne pas diluer le reste du discours.
+ */
+function psychoLines(psycho) {
+  if (!psycho) return [];
+  const { traits } = psycho.bigFive;
+  const entries = Object.entries(traits)
+    .map(([t, v]) => ({ trait: t, v, abs: Math.abs(v) }))
+    .sort((a, b) => b.abs - a.abs);
+
+  const lines = [];
+  const top = entries[0];
+  if (top && top.abs >= 0.25) {
+    const dir = top.v > 0 ? 'high' : 'low';
+    const frag = pick(OCEAN_FRAGMENTS[top.trait]?.[dir] ?? []);
+    if (frag) lines.push(frag);
+    const consFrag = CONSUMER_FRAGMENTS[top.trait]?.[dir];
+    if (consFrag) lines.push(consFrag);
+  }
+
+  // Une phrase privacy si le segment est saillant.
+  const westinId = psycho.westin?.id;
+  if (westinId && westinId !== 'unconcerned' && Math.random() < 0.7) {
+    lines.push(WESTIN_FRAGMENTS[westinId]);
+  } else if (westinId === 'unconcerned' && Math.random() < 0.5) {
+    lines.push(WESTIN_FRAGMENTS.unconcerned);
+  }
+
+  return lines;
+}
+
+// ---------------------------------------------------------------------------
 // Composition.
 // ---------------------------------------------------------------------------
-export function compose(profilerResult) {
+export function compose(profilerResult, psycho) {
   const { winner } = profilerResult;
   const bank = BANK[winner.id];
 
   const lines = [pick(INTROS), pick(bank.core)];
 
-  // On récupère les fragments associés aux règles déclenchées (strength > 0),
-  // pondérés par la force. On en garde 2 à 3 — plus c'est long, plus c'est dilué.
+  // Fragments liés aux règles déclenchées du persona gagnant.
   const fragments = winner.triggered
     .map((t) => ({ ...t, text: bank.triggers[t.id] }))
     .filter((t) => t.text)
     .sort((a, b) => (b.weight * b.strength) - (a.weight * a.strength))
-    .slice(0, 3)
+    .slice(0, 2)
     .map((t) => t.text);
 
-  lines.push(...shuffle(fragments));
+  // Fragments psychométriques (Big Five / conso / Westin) insérés au milieu.
+  const psycho_lines = psychoLines(psycho);
+
+  lines.push(...shuffle([...fragments, ...psycho_lines]).slice(0, 4));
   lines.push(pick(OUTROS));
 
   return { persona: winner, lines };
