@@ -43,7 +43,7 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({
 // SCÈNE 2 — TRANSE
 // Une phrase à la fois, crossfade, pas de scroll.
 // ===========================================================================
-const showTranceLine = (text, holdMs = 2400) => new Promise((resolve) => {
+const showTranceLine = (text, holdMs = 4200) => new Promise((resolve) => {
   const prev = tranceLines.querySelector('.trance-line');
   if (prev) {
     prev.classList.add('fading-out');
@@ -69,7 +69,7 @@ const runTrance = async () => {
     'Ton empreinte se dessine…',
   ];
   for (const line of waitingLines) {
-    await showTranceLine(line, 1600);
+    await showTranceLine(line, 2400);
   }
 
   lastData = await collectPromise;
@@ -77,8 +77,11 @@ const runTrance = async () => {
   lastPsycho = analyze(lastData);
   lastScript = compose(lastProfile, lastPsycho);
 
+  // Durée adaptée à la longueur de la phrase : min 4.2s, +45ms par caractère.
+  // Une phrase courte tient ~4.5s, une phrase longue monte vers ~7s.
   for (const line of lastScript.lines) {
-    await showTranceLine(line, 2600);
+    const hold = Math.min(7000, 4200 + line.length * 45);
+    await showTranceLine(line, hold);
   }
 
   // Dernière phrase reste à l'écran, on ajoute le bouton.
@@ -244,6 +247,27 @@ const buildCards = (d) => {
   }
 
   return parts.join('');
+};
+
+// ---------- Oracle echo : rappel des phrases de la transe ----------
+const buildOracleEcho = (script) => {
+  if (!script?.lines?.length) return '';
+  const items = script.lines
+    .map((line) => `<p class="echo-line">${escapeHtml(line)}</p>`)
+    .join('');
+  return `
+    <section class="oracle-echo">
+      <h3 class="echo-title">
+        <span class="echo-icon">✦</span>
+        Ce que l’Oracle a murmuré
+      </h3>
+      <div class="echo-body">${items}</div>
+      <p class="echo-foot">
+        Relis à froid ce que la transe t’a soufflé. Les pages suivantes
+        expliquent <em>d’où</em> viennent ces phrases.
+      </p>
+    </section>
+  `;
 };
 
 // ---------- Psychometrics panel ----------
@@ -447,7 +471,7 @@ const syntaxHighlight = (json) => {
 const runReveal = () => {
   setState('reveal');
   revealCards.innerHTML   = buildCards(lastData);
-  revealPersona.innerHTML = buildPersona(lastProfile) + buildPsychometrics(lastPsycho);
+  revealPersona.innerHTML = buildOracleEcho(lastScript) + buildPersona(lastProfile) + buildPsychometrics(lastPsycho);
   revealRaw.innerHTML     = syntaxHighlight(lastData);
 };
 
