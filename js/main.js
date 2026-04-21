@@ -39,11 +39,24 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
 
+// Durée d'affichage en ms calibrée sur les standards de sous-titrage.
+// Référence : ~180 mots/min confortables (BBC/Netflix guidelines, ~17 CPS),
+// ralenti ici à ~150 mots/min pour le ton mystique (mots qui se savourent).
+// + un buffer de 900ms pour le fondu d'entrée et la pause contemplative.
+// Bornes : min 2s (pour une phrase très courte), max 7.5s (pour les tirades).
+const readingTimeMs = (text) => {
+  const words = (text ?? '').trim().split(/\s+/).filter(Boolean).length;
+  const perWord = 60000 / 150;  // 400 ms / mot
+  const raw = words * perWord + 900;
+  return Math.min(7500, Math.max(2000, Math.round(raw)));
+};
+
 // ===========================================================================
 // SCÈNE 2 — TRANSE
 // Une phrase à la fois, crossfade, pas de scroll.
 // ===========================================================================
-const showTranceLine = (text, holdMs = 4200) => new Promise((resolve) => {
+const showTranceLine = (text, holdMs) => new Promise((resolve) => {
+  if (holdMs == null) holdMs = readingTimeMs(text);
   const prev = tranceLines.querySelector('.trance-line');
   if (prev) {
     prev.classList.add('fading-out');
@@ -69,7 +82,7 @@ const runTrance = async () => {
     'Ton empreinte se dessine…',
   ];
   for (const line of waitingLines) {
-    await showTranceLine(line, 2400);
+    await showTranceLine(line);
   }
 
   lastData = await collectPromise;
@@ -77,11 +90,8 @@ const runTrance = async () => {
   lastPsycho = analyze(lastData);
   lastScript = compose(lastProfile, lastPsycho);
 
-  // Durée adaptée à la longueur de la phrase : min 4.2s, +45ms par caractère.
-  // Une phrase courte tient ~4.5s, une phrase longue monte vers ~7s.
   for (const line of lastScript.lines) {
-    const hold = Math.min(7000, 4200 + line.length * 45);
-    await showTranceLine(line, hold);
+    await showTranceLine(line);
   }
 
   // Dernière phrase reste à l'écran, on ajoute le bouton.
