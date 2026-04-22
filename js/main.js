@@ -5,6 +5,7 @@
 import Collector from './collector.js';
 import { profile } from './profiler.js';
 import { compose } from './oracle.js';
+import { analyze, TRAIT_LABELS, TRAIT_DESCRIPTIONS } from './psychometrics.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,6 +24,7 @@ const revealPersona = $('reveal-persona');
 let lastData = null;
 let lastProfile = null;
 let lastScript = null;
+let lastPsycho = null;
 
 const setState = (name) => {
   body.dataset.state = name;
@@ -37,11 +39,24 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
 
+// Durée d'affichage en ms calibrée sur les standards de sous-titrage.
+// Référence : ~180 mots/min confortables (BBC/Netflix guidelines, ~17 CPS),
+// ralenti ici à ~150 mots/min pour le ton mystique (mots qui se savourent).
+// + un buffer de 900ms pour le fondu d'entrée et la pause contemplative.
+// Bornes : min 2s (pour une phrase très courte), max 7.5s (pour les tirades).
+const readingTimeMs = (text) => {
+  const words = (text ?? '').trim().split(/\s+/).filter(Boolean).length;
+  const perWord = 60000 / 150;  // 400 ms / mot
+  const raw = words * perWord + 900;
+  return Math.min(7500, Math.max(2000, Math.round(raw)));
+};
+
 // ===========================================================================
 // SCÈNE 2 — TRANSE
 // Une phrase à la fois, crossfade, pas de scroll.
 // ===========================================================================
-const showTranceLine = (text, holdMs = 2400) => new Promise((resolve) => {
+const showTranceLine = (text, holdMs) => new Promise((resolve) => {
+  if (holdMs == null) holdMs = readingTimeMs(text);
   const prev = tranceLines.querySelector('.trance-line');
   if (prev) {
     prev.classList.add('fading-out');
@@ -67,15 +82,16 @@ const runTrance = async () => {
     'Ton empreinte se dessine…',
   ];
   for (const line of waitingLines) {
-    await showTranceLine(line, 1600);
+    await showTranceLine(line);
   }
 
   lastData = await collectPromise;
   lastProfile = profile(lastData);
-  lastScript = compose(lastProfile);
+  lastPsycho = analyze(lastData);
+  lastScript = compose(lastProfile, lastPsycho);
 
   for (const line of lastScript.lines) {
-    await showTranceLine(line, 2600);
+    await showTranceLine(line);
   }
 
   // Dernière phrase reste à l'écran, on ajoute le bouton.
@@ -243,6 +259,167 @@ const buildCards = (d) => {
   return parts.join('');
 };
 
+// ---------- Oracle echo : rappel des phrases de la transe ----------
+const buildOracleEcho = (script) => {
+  if (!script?.lines?.length) return '';
+  const items = script.lines
+    .map((line) => `<p class="echo-line">${escapeHtml(line)}</p>`)
+    .join('');
+  return `
+    <section class="oracle-echo">
+      <h3 class="echo-title">
+        <span class="echo-icon">✦</span>
+        Ce que l’Oracle a murmuré
+      </h3>
+      <div class="echo-body">${items}</div>
+      <p class="echo-foot">
+        Relis à froid ce que la transe t’a soufflé. Les pages suivantes
+        expliquent <em>d’où</em> viennent ces phrases.
+      </p>
+    </section>
+  `;
+};
+
+// ---------- Psychometrics panel ----------
+// Rendu du Big Five, segment Westin, chronotype et profil conso dérivé.
+// Chaque bloc cite sa source académique.
+const TRAIT_ORDER = ['O', 'C', 'E', 'A', 'N'];
+
+const buildBigFiveBars = (traits) => TRAIT_ORDER.map((t) => {
+  const z = traits[t] ?? 0;
+  const pct = Math.round(((z + 1) / 2) * 100);   // [-1,+1] → [0,100]
+  const dir = z >= 0 ? 'high' : 'low';
+  const desc = TRAIT_DESCRIPTIONS[t][dir];
+  const absStrong = Math.abs(z) >= 0.4;
+  const zLabel = (z >= 0 ? '+' : '') + z.toFixed(2) + 'σ';
+  return `
+    <div class="ocean-row ${absStrong ? 'strong' : ''}">
+      <span class="ocean-label">${TRAIT_LABELS[t]}</span>
+      <span class="ocean-track">
+        <span class="ocean-axis"></span>
+        <span class="ocean-fill ${z >= 0 ? 'pos' : 'neg'}" style="width:${Math.abs(z) * 50}%; ${z >= 0 ? 'left:50%' : `right:50%`}"></span>
+      </span>
+      <span class="ocean-z">${zLabel}</span>
+      <span class="ocean-desc">${escapeHtml(desc)}</span>
+    </div>
+  `;
+}).join('');
+
+const buildPsychometrics = (psycho) => {
+  if (!psycho) return '';
+  const { bigFive, westin, chrono, consumer } = psycho;
+
+  // Bloc Big Five avec avertissement scientifique.
+  const bigFiveHtml = `
+    <div class="psy-section psy-bigfive">
+      <h3>Portrait OCEAN <span class="psy-sub">selon les signaux détectés</span></h3>
+      <div class="ocean-grid">${buildBigFiveBars(bigFive.traits)}</div>
+      <p class="psy-footnote">
+        Lecture : une barre à droite = au-dessus de la moyenne, à gauche = en dessous.
+        Agrégation probabiliste de ${bigFive.contributions.length} signal(s) indépendant(s).
+        Chaque signal unitaire reste faible (r ≈ 0.15–0.30, Azucar et al. 2018) ;
+        c'est le cumul qui rend le portrait ressemblant.
+      </p>
+    </div>
+  `;
+
+  // Signaux déclenchés + sources.
+  const sigsHtml = bigFive.contributions.length === 0
+    ? '<p class="psy-empty">Aucun signal détectable dans ce rapport.</p>'
+    : bigFive.contributions.map((c) => `
+        <details class="psy-signal">
+          <summary>
+            <span class="psy-sig-label">${escapeHtml(c.label)}</span>
+            <span class="psy-sig-strength">${Math.round(c.strength * 100)}%</span>
+          </summary>
+          <div class="psy-sig-body">
+            <div class="psy-sig-effects">${
+              TRAIT_ORDER
+                .filter((t) => Math.abs(c.effects[t]) >= 0.1)
+                .map((t) => {
+                  const v = c.effects[t] * c.strength;
+                  const sign = v >= 0 ? '+' : '';
+                  return `<span class="psy-eff psy-eff-${v >= 0 ? 'pos' : 'neg'}">${TRAIT_LABELS[t]} ${sign}${v.toFixed(2)}σ</span>`;
+                })
+                .join('')
+            }</div>
+            <cite class="psy-source">${escapeHtml(c.source)}</cite>
+          </div>
+        </details>
+      `).join('');
+
+  // Segment Westin.
+  const westinHtml = `
+    <div class="psy-section psy-westin">
+      <h3>Segment Westin (vie privée)</h3>
+      <div class="psy-badge psy-westin-${westin.id}">${escapeHtml(westin.label)}</div>
+      <p class="psy-text">${escapeHtml(westin.description)}</p>
+      <cite class="psy-source">Westin Privacy Segmentation (Harris &amp; Westin, 1991-2003) ; Schomakers et al. (2019)</cite>
+    </div>
+  `;
+
+  // Chronotype.
+  const chronoHtml = chrono.id === 'unknown' ? '' : `
+    <div class="psy-section psy-chrono">
+      <h3>Chronotype</h3>
+      <div class="psy-badge psy-chrono-${chrono.id}">${escapeHtml(chrono.label)}</div>
+      <p class="psy-text">${escapeHtml(chrono.note ?? '')}</p>
+      <cite class="psy-source">Horne &amp; Östberg (1976) ; Roenneberg et al. (2007), Current Biology</cite>
+    </div>
+  `;
+
+  // Profil conso.
+  const consumerHtml = consumer.length === 0
+    ? `<p class="psy-empty">Portrait trop proche de la moyenne : aucune préférence conso saillante.</p>`
+    : consumer.map((side) => {
+        const arrow = side.direction === 'high' ? '↑' : '↓';
+        return `
+          <div class="psy-consumer-block">
+            <h4>
+              <span class="psy-trait-name">${escapeHtml(side.traitLabel)} ${arrow}</span>
+              <span class="psy-z">${side.z >= 0 ? '+' : ''}${side.z.toFixed(2)}σ</span>
+            </h4>
+            <div class="psy-chip-group">
+              <span class="psy-chip-label">Appétences :</span>
+              ${side.likes.map((x) => `<span class="psy-chip psy-chip-like">${escapeHtml(x)}</span>`).join('')}
+            </div>
+            <div class="psy-chip-group">
+              <span class="psy-chip-label">Marques typiques :</span>
+              ${side.brands.map((x) => `<span class="psy-chip psy-chip-brand">${escapeHtml(x)}</span>`).join('')}
+            </div>
+            <cite class="psy-source">${escapeHtml(side.source)}</cite>
+          </div>
+        `;
+      }).join('');
+
+  return `
+    <section class="psy-panel">
+      ${bigFiveHtml}
+
+      <div class="psy-row">
+        ${westinHtml}
+        ${chronoHtml}
+      </div>
+
+      <div class="psy-section psy-consumer">
+        <h3>Profil consommateur probable <span class="psy-sub">(dérivé du portrait OCEAN)</span></h3>
+        ${consumerHtml}
+        <p class="psy-warning">
+          ⚠ Ces prédictions sont <strong>probabilistes</strong> et tirées de corrélations de groupe :
+          elles décrivent ce que font <em>en moyenne</em> les personnes aux signaux similaires,
+          pas ce que tu es. C'est exactement le type d'inférence qu'utilisent les régies
+          publicitaires (Matz et al. 2017, PNAS).
+        </p>
+      </div>
+
+      <div class="psy-section psy-signals">
+        <h3>Signaux détectés dans ton rapport</h3>
+        ${sigsHtml}
+      </div>
+    </section>
+  `;
+};
+
 // ---------- Persona panel ----------
 const buildPersona = (prof) => {
   const w = prof.winner;
@@ -304,7 +481,7 @@ const syntaxHighlight = (json) => {
 const runReveal = () => {
   setState('reveal');
   revealCards.innerHTML   = buildCards(lastData);
-  revealPersona.innerHTML = buildPersona(lastProfile);
+  revealPersona.innerHTML = buildOracleEcho(lastScript) + buildPersona(lastProfile) + buildPsychometrics(lastPsycho);
   revealRaw.innerHTML     = syntaxHighlight(lastData);
 };
 
