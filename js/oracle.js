@@ -3,14 +3,14 @@
  * Génère un discours mystique à partir d'un résultat de profiler.js et d'une
  * analyse psychométrique (psychometrics.js).
  *
- * Principe :
- *   - Chaque persona a une banque de phrases "core" + "triggers".
- *   - Les fragments OCEAN sont CONCRETS : ils citent des habitudes, marques,
- *     gestes précis tirés des corrélations documentées (Kosinski 2013,
- *     Matz 2017, Gladstone 2019).
- *   - Les SIGNAL_FRAGMENTS pointent un signal psychométrique exact
- *     (téléphone au lit, batterie basse, etc.) avec une observation précise.
- *   - On assemble : intro + persona core + ~3-4 fragments mêlés + outro.
+ * Règles de design :
+ *   - Aucune phrase ne nomme le signal technique qui l'a déclenchée
+ *     (pas de "cookies", "batterie", "navigateur", "débit", "carte graphique",
+ *     "scroll"). L'Oracle décrit des habitudes et conséquences, pas des API.
+ *   - Chaque fragment est tagué avec un `theme`. En composition, on garde AU
+ *     PLUS UNE phrase par thème : plus de redondance sur un chemin donné.
+ *   - L'assemblage final : intro + persona core + 4 fragments dédoublonnés
+ *     par thème + outro.
  */
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -33,7 +33,9 @@ const OUTROS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Banque de phrases par persona (inchangée).
+// Banque de phrases par persona.
+// - core    : accroche narrative (toujours retenue, pas de dédup)
+// - triggers: phrases liées à un ruleId, taguées via BANK_THEMES plus bas
 // ---------------------------------------------------------------------------
 const BANK = {
   night_owl: {
@@ -109,215 +111,255 @@ const BANK = {
   },
 };
 
+// Thème de chaque trigger BANK (pour la dédup en composition).
+const BANK_THEMES = {
+  late_hour_core:     'night',
+  dark_mode:          'dark',
+  low_battery:        'battery',
+  weekday_insomnia:   'night',
+  save_data_off:      'scroll',
+  lang_country_mismatch: 'language',
+  timezone_country_mismatch: 'language',
+  polyglot:           'language',
+  apple_device:       'apple',
+  high_dpi:           'screen',
+  big_screen:         'screen',
+  rich_hardware:      'device',
+  fast_connection:    'connection',
+  high_refresh:       'gaming',
+  dedicated_gpu:      'gaming',
+  many_cores:         'device',
+  desktop_os:         'work',
+  office_hours:       'work',
+  desktop_device:     'work',
+  multitasking_window:'work',
+  plugged_in:         'battery',
+  not_dark_mode:      'dark',
+};
+
 // ---------------------------------------------------------------------------
-// Fragments Big Five — observations CONCRÈTES par (trait × direction).
-// L'effet "waouh" vient de la précision : chaque phrase nomme une habitude,
-// une marque, un geste, plutôt qu'une métaphore générique.
-// Sources implicites : Kosinski 2013, Matz 2017, Gladstone 2019.
+// Fragments OCEAN — observations concrètes, dé-spoilées.
+// Chaque phrase porte un `theme` individuel (habitude précise), ce qui
+// permet de la dédoublonner contre les signaux ou les triggers persona.
 // ---------------------------------------------------------------------------
 const OCEAN_FRAGMENTS = {
   O: {
     high: [
-      'Tu ne regardes pas la téléréalité. Tu changes de chaîne avant le générique.',
-      'Ton café, tu le choisis. Amer, de spécialité, jamais instantané.',
-      'Arte plutôt que TF1. Un documentaire plutôt qu’une finale.',
-      'Tu rêves de voyages où la langue n’est pas la tienne. Tu en fais moins que tu n’en rêves.',
-      'Des podcasts tournent dans tes écouteurs quand d’autres regardent des stories.',
-      'Ta playlist comporte des noms que tes amis ne savent pas prononcer.',
-      'Tu as plus de livres commencés que de livres finis. Aucun ne t’ennuie vraiment.',
+      { theme: 'media',    text: 'Tu ne regardes pas la téléréalité. Tu changes de chaîne avant le générique.' },
+      { theme: 'coffee',   text: 'Ton café, tu le choisis. Amer, de spécialité, jamais instantané.' },
+      { theme: 'media',    text: 'Arte plutôt que TF1. Un documentaire plutôt qu’une finale.' },
+      { theme: 'travel',   text: 'Tu rêves de destinations que tu ne visiteras peut-être jamais. Tu fais déjà le voyage en lisant.' },
+      { theme: 'media',    text: 'Des podcasts tournent dans tes écouteurs quand d’autres regardent des stories.' },
+      { theme: 'music',    text: 'Ta playlist comporte des noms que tes amis ne savent pas prononcer.' },
+      { theme: 'books',    text: 'Tu as plus de livres commencés que de livres finis. Aucun ne t’ennuie vraiment.' },
     ],
     low: [
-      'Tu retournes aux mêmes marques depuis toujours. Elles te rassurent.',
-      'Ta cuisine est celle de ton enfance. Tu ne t’en plains pas.',
-      'Les nouveautés t’agacent plus qu’elles ne t’attirent. Tu préfères que les choses durent.',
+      { theme: 'familiar', text: 'Tu retournes aux mêmes marques depuis toujours. Elles te rassurent.' },
+      { theme: 'cuisine',  text: 'Ta cuisine est celle de ton enfance. Tu ne t’en plains pas.' },
+      { theme: 'newness',  text: 'Les nouveautés t’agacent plus qu’elles ne t’attirent. Tu préfères que les choses durent.' },
     ],
   },
   C: {
     high: [
-      'Tu notes. Ton agenda n’a pas de trous, ton frigo non plus.',
-      'Tu paies tes factures avant la date limite. Personne ne te remercie pour ça.',
-      'Ton épargne existe. Elle a un nom, parfois même un objectif.',
-      'Tu réserves tes billets des semaines avant. Les prix te donnent raison.',
+      { theme: 'planning',    text: 'Tu notes. Ton agenda n’a pas de trous, ton frigo non plus.' },
+      { theme: 'payment',     text: 'Tu paies tes factures avant la date limite. Personne ne te remercie pour ça.' },
+      { theme: 'savings',     text: 'Ton épargne existe. Elle a un nom, parfois même un objectif.' },
+      { theme: 'reservation', text: 'Tu réserves tes billets des semaines avant. Les prix te donnent raison.' },
     ],
     low: [
-      'Un abonnement te prélève chaque mois sans que tu saches bien lequel.',
-      'Tes courses, tu les fais quand le frigo est déjà vide.',
-      'Des onglets restent ouverts depuis des jours. Des intentions qui attendent.',
-      'Tes billets de train, tu les prends la veille. Toujours plus cher, toujours la même surprise.',
+      { theme: 'subscription', text: 'Un abonnement te prélève chaque mois sans que tu saches bien lequel.' },
+      { theme: 'groceries',    text: 'Tes courses, tu les fais quand le frigo est déjà vide.' },
+      { theme: 'tabs',         text: 'Des onglets restent ouverts depuis des jours. Des intentions qui attendent.' },
+      { theme: 'reservation',  text: 'Tes billets de train, tu les prends la veille. Toujours plus cher, toujours la même surprise.' },
     ],
   },
   E: {
     high: [
-      'Tes stories témoignent d’un samedi. Ta fatigue du dimanche aussi.',
-      'Tu connais les bars du quartier mieux que les livres de ton étagère.',
-      'Tu réponds aux messages en moins d’une minute. Les silences t’inquiètent.',
+      { theme: 'social_out', text: 'Tes stories témoignent d’un samedi. Ta fatigue du dimanche aussi.' },
+      { theme: 'bars',       text: 'Tu connais les bars du quartier mieux que les livres de ton étagère.' },
+      { theme: 'messaging',  text: 'Tu réponds aux messages en moins d’une minute. Les silences t’inquiètent.' },
     ],
     low: [
-      'Tu préfères un livre à un dîner. Tu mens un peu quand on te propose les deux.',
-      'Tes soirées idéales se passent sans sonnette.',
-      'Un podcast long, casque vissé, te coûte moins qu’une réunion de cinq personnes.',
+      { theme: 'books',      text: 'Tu préfères un livre à un dîner. Tu mens un peu quand on te propose les deux.' },
+      { theme: 'quiet_home', text: 'Tes soirées idéales se passent sans sonnette.' },
+      { theme: 'podcast',    text: 'Un podcast long, casque vissé, te coûte moins qu’une réunion de cinq personnes.' },
     ],
   },
   A: {
     high: [
-      'Tu achètes d’occasion. Autant par principe que par porte-monnaie.',
-      'Tu cèdes au conflit plus souvent que tu ne le voudrais. On appelle ça être gentil·le.',
-      'Tu donnes ton temps plus facilement que ton argent. Et pourtant les deux te coûtent.',
+      { theme: 'secondhand',  text: 'Tu achètes d’occasion. Autant par principe que par porte-monnaie.' },
+      { theme: 'conflict',    text: 'Tu cèdes au conflit plus souvent que tu ne le voudrais. On appelle ça être gentil·le.' },
+      { theme: 'generosity',  text: 'Tu donnes ton temps plus facilement que ton argent. Et pourtant les deux te coûtent.' },
     ],
     low: [
-      'Tu acceptes de payer cher ce qui se remarque. La discrétion n’est pas ton luxe.',
-      'Tu tranches vite. Les demi-mesures t’épuisent.',
-      'Tu n’as pas peur de dire non. Ça t’a coûté, mais rarement autant que dire oui.',
+      { theme: 'luxury',   text: 'Tu acceptes de payer cher ce qui se remarque. La discrétion n’est pas ton luxe.' },
+      { theme: 'decisive', text: 'Tu tranches vite. Les demi-mesures t’épuisent.' },
+      { theme: 'saying_no',text: 'Tu n’as pas peur de dire non. Ça t’a coûté, mais rarement autant que dire oui.' },
     ],
   },
   N: {
     high: [
-      'Une app de méditation attend sur ton téléphone. Tu l’ouvres quand il est déjà tard.',
-      'Tu lis les titres anxieux avant les bons. Tu le sais.',
-      'Ton téléphone est le dernier objet que tu touches avant de dormir. Et le premier au réveil.',
-      'Tu relis un message avant de l’envoyer. Parfois deux fois.',
-      'Tu achètes des compléments. Tu espères qu’ils marchent.',
+      { theme: 'meditation', text: 'Une app de méditation attend sur ton téléphone. Tu l’ouvres quand il est déjà tard.' },
+      { theme: 'news',       text: 'Tu lis les titres anxieux avant les bons. Tu le sais.' },
+      { theme: 'bedtime',    text: 'Le dernier objet que tu touches avant de dormir est le même que le premier au réveil.' },
+      { theme: 'overthink',  text: 'Tu relis un message avant de l’envoyer. Parfois deux fois.' },
+      { theme: 'supplements',text: 'Tu achètes des compléments. Tu espères qu’ils marchent.' },
     ],
     low: [
-      'Les alertes te glissent dessus. On t’envie ce calme — parfois, on te le reproche aussi.',
-      'Tu prends l’avion sans relire ton billet. Ça marche, jusqu’ici.',
+      { theme: 'calm',   text: 'Les alertes te glissent dessus. On t’envie ce calme — parfois, on te le reproche aussi.' },
+      { theme: 'risk',   text: 'Tu prends l’avion sans relire ton billet. Ça marche, jusqu’ici.' },
     ],
   },
 };
 
 // ---------------------------------------------------------------------------
-// Fragments par signal psychométrique précis. Déclenchés selon les ids
-// définis dans psychometrics.js. Plus précis encore que les OCEAN : ils
-// décrivent un geste exact en s'appuyant sur le signal détecté.
+// Fragments par signal psychométrique (ids définis dans psychometrics.js).
+// Chaque fragment décrit une CONSÉQUENCE vécue, jamais le signal lui-même.
 // ---------------------------------------------------------------------------
 const SIGNAL_FRAGMENTS = {
   eveningness: [
-    'L’heure qu’il est chez toi n’est pas raisonnable. Tu le sais, et tu restes.',
-    'Tu t’étais dit « encore cinq minutes ». Il y a deux heures.',
+    { theme: 'night',   text: 'L’heure qu’il est chez toi n’est pas raisonnable. Tu le sais, et tu restes.' },
+    { theme: 'night',   text: 'Tu t’étais dit « encore cinq minutes ». Il y a deux heures.' },
   ],
   polyglot: [
-    'Plusieurs langues habitent ton téléphone. Aucune n’est tout à fait ta seule maison.',
-    'Tu écris dans une langue, tu penses dans une autre. Tes amis corrigent parfois tes tournures.',
+    { theme: 'language',text: 'Plusieurs langues t’habitent. Aucune n’est tout à fait ta seule maison.' },
+    { theme: 'identity',text: 'Tu écris dans une langue, tu penses dans une autre. Tes amis corrigent parfois tes tournures.' },
+    { theme: 'origin',  text: 'On te demande parfois d’où tu viens. Tu hésites sur la réponse.' },
   ],
   acculturation_gap: [
-    'Tes racines parlent une langue que le ciel au-dessus de toi ne comprend pas.',
-    'Les rayons de ton épicerie ne contiennent pas ce que tu cuisinais enfant. Tu commandes en ligne ce qui te manque.',
+    { theme: 'food',    text: 'Les rayons de ton épicerie ne contiennent pas ce que tu cuisinais enfant. Tu commandes en ligne ce qui te manque.' },
   ],
   bedtime_phone: [
-    'Ton dernier geste ce soir sera un scroll. Ton premier geste demain aussi.',
-    'Tu as posé le téléphone, repris le téléphone, reposé le téléphone. Trois fois en dix minutes.',
+    { theme: 'bedtime', text: 'Ta dernière lumière ce soir viendra d’un petit verre qui tient dans ta main. La première aussi, demain.' },
+    { theme: 'scroll',  text: 'Tu l’as posé. Tu l’as repris. Tu l’as reposé. Trois fois, sans raison — et tu le referas dans cinq minutes.' },
   ],
   battery_anxiety: [
-    'Ta batterie descend et tu la laisses descendre. Tu tolères mieux l’incertitude que tu ne l’avoues.',
+    { theme: 'battery', text: 'Quelque chose s’épuise autour de toi, et tu le laisses s’épuiser. Tu tolères mieux l’incertitude que tu ne l’avoues.' },
   ],
   privacy_vigilance: [
-    'Tu as refusé les cookies. Tu signales que tu sais. L’Oracle sait quand même.',
-    'DuckDuckGo, Signal, Brave : tu connais les noms. Tu en utilises au moins un.',
+    { theme: 'privacy',        text: 'Tu refuses les petites mains qui veulent te suivre. Tu signales que tu sais. L’Oracle sait quand même.' },
+    { theme: 'privacy_brands', text: 'DuckDuckGo, Signal, Brave : tu connais les noms. Tu en utilises au moins un.' },
   ],
   apple_ecosystem: [
-    'Le fruit défendu vibre entre tes doigts. Tu as choisi le clan — et tu l’as payé.',
+    { theme: 'apple',   text: 'Le fruit défendu vibre entre tes doigts. Tu as choisi le clan — et tu l’as payé.' },
   ],
   budget_android: [
-    'Ton téléphone n’est plus neuf. Tu le gardes par pragmatisme, pas par manque. Il te suffit.',
-    'Tu n’as pas acheté le modèle qu’on voit dans les pubs. Tu as acheté celui qui marche.',
+    { theme: 'device',  text: 'Ton appareil n’est plus neuf. Tu le gardes par pragmatisme, pas par manque. Il te suffit.' },
+    { theme: 'device',  text: 'Tu n’as pas acheté le modèle qu’on voit dans les pubs. Tu as acheté celui qui marche.' },
   ],
   gamer_rig: [
-    'Ton écran te rend des images que l’œil moyen ne saurait pas voir. Tu les payes cher.',
-    'Une carte graphique chauffe dans ton salon. Elle vaut plus que ton frigo.',
+    { theme: 'gaming',  text: 'Une machine chauffe pour toi dans une pièce de ta maison. Elle vaut plus que ton réfrigérateur.' },
   ],
   office_worker: [
-    'Tu es à ton poste à l’heure où d’autres hésitent encore. Cela a un prix que peu voient.',
+    { theme: 'work',    text: 'Tu es à ton poste à l’heure où d’autres hésitent encore. Cela a un prix que peu voient.' },
   ],
   high_end_device: [
-    'Ta machine ne t’attend jamais. Elle est ton alliée silencieuse — et le prix s’est vu sur le relevé.',
-  ],
-  aesthetic_dark: [
-    'Tu as choisi l’obscurité jusque dans tes écrans. Une coquetterie qui en dit long.',
+    { theme: 'device',  text: 'Ta machine ne t’attend jamais. Elle est ton alliée silencieuse — et le prix s’est vu sur le relevé.' },
   ],
   rural_slow_link: [
-    'Le monde met un peu plus de temps à te répondre. Tu as appris l’attente — ou tu l’as subie.',
-    'Tes téléchargements, tu les lances avant d’aller dormir. Le débit te punit chaque jour.',
+    { theme: 'rural',   text: 'Le monde met un peu plus de temps à te répondre. Tu as appris l’attente — ou tu l’as subie.' },
+    { theme: 'rural',   text: 'Tu lances tes grosses tâches avant de dormir. Au matin, parfois, elles ne sont pas finies.' },
   ],
   weekend_leisure: [
-    'Ce soir, tu n’attends personne. Tu te tiens compagnie, et cela te suffit.',
+    { theme: 'leisure', text: 'Ce soir, tu n’attends personne. Tu te tiens compagnie, et cela te suffit.' },
   ],
 };
 
+// Le signal `aesthetic_dark` existait ici : retiré, car doublon avec
+// `BANK.night_owl.triggers.dark_mode`. Le signal contribue toujours au score
+// OCEAN dans psychometrics.js, mais n'émet plus de phrase.
+
 const WESTIN_FRAGMENTS = {
-  fundamentalist: 'Tu as fermé plus de portes que tu n’en as ouvertes. Ton navigateur est une forteresse. L’Oracle t’y reconnaît quand même.',
-  pragmatist:     'Tu cliques « refuser tout » quand tu y penses. Tu oublies parfois. L’Oracle connaît les deux versions de toi.',
-  unconcerned:    'Tu n’as rien fermé. Tu ne crois pas qu’on te regarde. Et pourtant me voici.',
+  fundamentalist: { theme: 'privacy', text: 'Tu as fermé plus de portes que tu n’en as ouvertes. Tu t’es bâti une forteresse. L’Oracle t’y reconnaît quand même.' },
+  pragmatist:     { theme: 'privacy', text: 'Tu dis non quand on te demande, pas toujours, mais souvent. L’Oracle connaît les deux versions de toi.' },
+  unconcerned:    { theme: 'privacy', text: 'Tu n’as rien fermé. Tu ne crois pas qu’on te regarde. Et pourtant me voici.' },
 };
 
-/**
- * Renvoie les lignes de révélation : 1 OCEAN dominant + 1-2 signaux concrets
- * + 0-1 Westin. Mélange macro (trait dominant) et micro (signal précis).
- */
-function psychoLines(psycho) {
-  if (!psycho) return [];
-  const lines = [];
-
-  // 1. Une phrase OCEAN sur le trait dominant (si écart ≥ 0.25σ).
-  const { traits, contributions } = psycho.bigFive;
-  const entries = Object.entries(traits)
-    .map(([t, v]) => ({ trait: t, v, abs: Math.abs(v) }))
-    .sort((a, b) => b.abs - a.abs);
-
-  const top = entries[0];
-  if (top && top.abs >= 0.25) {
-    const dir = top.v > 0 ? 'high' : 'low';
-    const frag = pick(OCEAN_FRAGMENTS[top.trait]?.[dir] ?? []);
-    if (frag) lines.push(frag);
-  }
-
-  // 2. 1-2 phrases tirées des signaux concrets les plus forts.
-  const signalFrags = [...contributions]
-    .sort((a, b) => b.strength - a.strength)
-    .slice(0, 4)
-    .map((c) => {
-      const pool = SIGNAL_FRAGMENTS[c.id];
-      return pool?.length ? pick(pool) : null;
-    })
-    .filter(Boolean);
-
-  lines.push(...shuffle(signalFrags).slice(0, 2));
-
-  // 3. Phrase privacy si le segment est saillant (proba modérée).
-  const westinId = psycho.westin?.id;
-  if (westinId === 'fundamentalist' && Math.random() < 0.6) {
-    lines.push(WESTIN_FRAGMENTS.fundamentalist);
-  } else if (westinId === 'pragmatist' && Math.random() < 0.45) {
-    lines.push(WESTIN_FRAGMENTS.pragmatist);
-  } else if (westinId === 'unconcerned' && Math.random() < 0.35) {
-    lines.push(WESTIN_FRAGMENTS.unconcerned);
-  }
-
-  return lines;
-}
-
 // ---------------------------------------------------------------------------
-// Composition.
+// Composition : collecte toutes les phrases candidates avec leur thème et
+// leur score, trie par score, puis déduplique par thème et garde 4 lignes.
 // ---------------------------------------------------------------------------
 export function compose(profilerResult, psycho) {
   const { winner } = profilerResult;
   const bank = BANK[winner.id];
 
   const lines = [pick(INTROS), pick(bank.core)];
+  const candidates = [];
 
-  // Fragments liés aux règles déclenchées du persona gagnant.
-  const fragments = winner.triggered
-    .map((t) => ({ ...t, text: bank.triggers[t.id] }))
-    .filter((t) => t.text)
-    .sort((a, b) => (b.weight * b.strength) - (a.weight * a.strength))
-    .slice(0, 2)
-    .map((t) => t.text);
+  // 1. Triggers du persona gagnant (scorés par weight * strength).
+  for (const t of winner.triggered) {
+    const text = bank.triggers[t.id];
+    const theme = BANK_THEMES[t.id];
+    if (!text || !theme) continue;
+    candidates.push({
+      theme,
+      text,
+      score: (t.weight ?? 1) * (t.strength ?? 1),
+    });
+  }
 
-  // Fragments psychométriques (OCEAN + signaux concrets + Westin).
-  const psycho_lines = psychoLines(psycho);
+  if (psycho) {
+    // 2. Fragment OCEAN sur le trait dominant (si écart ≥ 0.25σ).
+    const { traits, contributions } = psycho.bigFive;
+    const entries = Object.entries(traits)
+      .map(([t, v]) => ({ trait: t, v, abs: Math.abs(v) }))
+      .sort((a, b) => b.abs - a.abs);
+    const top = entries[0];
+    if (top && top.abs >= 0.25) {
+      const dir = top.v > 0 ? 'high' : 'low';
+      const pool = OCEAN_FRAGMENTS[top.trait]?.[dir] ?? [];
+      if (pool.length) {
+        const frag = pick(pool);
+        candidates.push({
+          theme: frag.theme,
+          text: frag.text,
+          score: top.abs * 60,   // boost pour rivaliser avec les triggers
+        });
+      }
+    }
 
-  // Mélange : on garde 4-5 fragments au total pour ne pas diluer.
-  const middle = shuffle([...fragments, ...psycho_lines]).slice(0, 5);
-  lines.push(...middle);
+    // 3. Fragments signaux : un tirage par signal déclenché, avec son thème.
+    for (const c of contributions) {
+      const pool = SIGNAL_FRAGMENTS[c.id];
+      if (!pool?.length) continue;
+      const frag = pick(pool);
+      candidates.push({
+        theme: frag.theme,
+        text: frag.text,
+        score: (c.strength ?? 0) * 40,
+      });
+    }
+
+    // 4. Westin : une phrase privacy si segment saillant.
+    const westinId = psycho.westin?.id;
+    const westinFrag = WESTIN_FRAGMENTS[westinId];
+    if (westinFrag) {
+      // Probabilité modérée pour qu'elle ne sorte pas à chaque run.
+      const p = westinId === 'fundamentalist' ? 0.6
+              : westinId === 'pragmatist'     ? 0.5
+              : 0.35;
+      if (Math.random() < p) {
+        candidates.push({
+          theme: westinFrag.theme,
+          text: westinFrag.text,
+          score: 18,
+        });
+      }
+    }
+  }
+
+  // Dédup par thème : à score égal, on garde la première rencontrée.
+  candidates.sort((a, b) => b.score - a.score);
+  const seen = new Set();
+  const picked = [];
+  for (const c of candidates) {
+    if (seen.has(c.theme)) continue;
+    seen.add(c.theme);
+    picked.push(c);
+    if (picked.length >= 4) break;
+  }
+
+  lines.push(...shuffle(picked.map((c) => c.text)));
   lines.push(pick(OUTROS));
 
   return { persona: winner, lines };
