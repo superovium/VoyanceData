@@ -9,12 +9,15 @@
  *   - Big Five (OCEAN)           → scoreBigFive()
  *   - Westin Privacy Index       → westinSegment()
  *   - Chronotype (morningness)   → chronotype()
+ *   - Mosaic-like geo segment    → mosaicSegment() (importé de mosaic.js)
  *   - Consumer profile dérivé    → consumerProfile()
  *
  * AVERTISSEMENT : chaque corrélation unitaire est faible (r ≈ 0.15–0.30).
  * C'est l'agrégation de 8–12 signaux indépendants qui rend la prédiction
  * ressemblante. On renvoie des scores "relatifs à la moyenne", jamais absolus.
  */
+
+import { mosaicSegment } from './mosaic.js';
 
 // ---------------------------------------------------------------------------
 // 1. SIGNAUX → DELTAS BIG FIVE
@@ -442,14 +445,16 @@ export const TRAIT_DESCRIPTIONS = {
 };
 
 /**
- * Agrège tout : traits Big Five, segment Westin, chronotype, préférences conso.
+ * Agrège tout : traits Big Five, segment Westin, chronotype, segment Mosaic,
+ * préférences conso (qui mêlent les inférences OCEAN et celles du segment géo).
  */
 export function analyze(report) {
   const bigFive = scoreBigFive(report);
   const westin  = westinSegment(report);
   const chrono  = chronotype(report);
+  const mosaic  = mosaicSegment(report);
   const consumer = consumerProfile(bigFive.traits);
-  return { bigFive, westin, chrono, consumer };
+  return { bigFive, westin, chrono, mosaic, consumer };
 }
 
 export { SIGNALS };

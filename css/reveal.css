@@ -622,6 +622,30 @@ body[data-state="reveal"] #scene-reveal {
 .psy-badge.psy-chrono-extreme_evening,
 .psy-badge.psy-chrono-evening        { background: rgba(96,165,250,.15); border-color: var(--rv-blue); color: var(--rv-blue); }
 
+/* Mosaic geo segment (approximatif) */
+.psy-badge.psy-mosaic-gb { background: rgba(96,165,250,.14);  border-color: var(--rv-blue);      color: var(--rv-blue); }
+.psy-badge.psy-mosaic-fr { background: rgba(192,132,252,.14); border-color: var(--rv-border-hl); color: var(--rv-accent-2); }
+.psy-badge.psy-mosaic-es { background: rgba(251,191,36,.14);  border-color: var(--rv-amber);     color: var(--rv-amber); }
+.psy-mosaic-code {
+  font-family: var(--font-mono);
+  opacity: .65;
+  margin-left: .45rem;
+  font-size: .72rem;
+  letter-spacing: 0;
+}
+.psy-chip.psy-chip-avoid {
+  background: rgba(154,134,196,.10);
+  color: var(--rv-dim);
+  border: 1px dashed var(--rv-dim);
+  text-decoration: line-through;
+  text-decoration-color: rgba(154,134,196,.6);
+}
+
+/* La rangée Westin + Chrono + Mosaic passe à 3 colonnes en >=860px */
+@media (min-width: 860px) {
+  .psy-row { grid-template-columns: 1fr 1fr 1fr; }
+}
+
 /* ---- Profil consommateur ---- */
 .psy-consumer-block {
   padding: .8rem .9rem;

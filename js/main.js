@@ -307,7 +307,7 @@ const buildBigFiveBars = (traits) => TRAIT_ORDER.map((t) => {
 
 const buildPsychometrics = (psycho) => {
   if (!psycho) return '';
-  const { bigFive, westin, chrono, consumer } = psycho;
+  const { bigFive, westin, chrono, mosaic, consumer } = psycho;
 
   // Bloc Big Five avec avertissement scientifique.
   const bigFiveHtml = `
@@ -368,6 +368,28 @@ const buildPsychometrics = (psycho) => {
     </div>
   `;
 
+  // Segment Mosaic-like (géographique). Affiché seulement si résolu.
+  const mosaicHtml = !mosaic ? '' : (() => {
+    const country = (mosaic.country || '').toLowerCase();
+    const tBrands = (mosaic.typical?.brands ?? []).slice(0, 6);
+    const tLikes  = (mosaic.typical?.likes  ?? []).slice(0, 5);
+    const tAvoids = (mosaic.typical?.avoids ?? []).slice(0, 3);
+    const chips = (arr, cls) => arr.map((x) =>
+      `<span class="psy-chip ${cls}">${escapeHtml(x)}</span>`
+    ).join('');
+    return `
+      <div class="psy-section psy-mosaic">
+        <h3>Segment géographique <span class="psy-sub">(approximatif)</span></h3>
+        <div class="psy-badge psy-mosaic-${country}">${escapeHtml(mosaic.label)}<span class="psy-mosaic-code">${escapeHtml(mosaic.country)}-${escapeHtml(mosaic.code)}</span></div>
+        <p class="psy-text">${escapeHtml(mosaic.description)}</p>
+        ${tBrands.length ? `<div class="psy-chip-group"><span class="psy-chip-label">Marques typiques&nbsp;:</span>${chips(tBrands, 'psy-chip-brand')}</div>` : ''}
+        ${tLikes.length  ? `<div class="psy-chip-group"><span class="psy-chip-label">Appétences&nbsp;:</span>${chips(tLikes, 'psy-chip-like')}</div>`   : ''}
+        ${tAvoids.length ? `<div class="psy-chip-group"><span class="psy-chip-label">À rebours&nbsp;:</span>${chips(tAvoids, 'psy-chip-avoid')}</div>`  : ''}
+        <cite class="psy-source">${escapeHtml(mosaic.source)}</cite>
+      </div>
+    `;
+  })();
+
   // Profil conso.
   const consumerHtml = consumer.length === 0
     ? `<p class="psy-empty">Portrait trop proche de la moyenne : aucune préférence conso saillante.</p>`
@@ -399,6 +421,7 @@ const buildPsychometrics = (psycho) => {
       <div class="psy-row">
         ${westinHtml}
         ${chronoHtml}
+        ${mosaicHtml}
       </div>
 
       <div class="psy-section psy-consumer">
