@@ -654,6 +654,11 @@ body[data-state="reveal"] #scene-reveal {
   border-left: 3px solid var(--rv-blue);
   border-radius: 0 8px 8px 0;
 }
+.psy-consumer-block.psy-consumer-mosaic {
+  background: rgba(251,191,36,.06);
+  border-left-color: var(--rv-amber);
+}
+.psy-consumer-block.psy-consumer-mosaic .psy-trait-name { color: var(--rv-amber); }
 .psy-consumer-block h4 {
   margin: 0 0 .5rem;
   display: flex;

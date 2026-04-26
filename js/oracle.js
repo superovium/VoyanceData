@@ -269,6 +269,103 @@ const SIGNAL_FRAGMENTS = {
 // `BANK.night_owl.triggers.dark_mode`. Le signal contribue toujours au score
 // OCEAN dans psychometrics.js, mais n'émet plus de phrase.
 
+// ---------------------------------------------------------------------------
+// Fragments par segment Mosaic : 1-2 phrases ultra-localisées par segment.
+// Tous taggés `theme: 'mosaic'` → au plus une phrase Mosaic par transe.
+// ---------------------------------------------------------------------------
+const MOSAIC_FRAGMENTS = {
+  // GB
+  gb_city_prosperity: [
+    'Ton café se boit dans une tasse fine, à 5£ le cappuccino. Tu connais le nom de la plantation.',
+    'Tu prends le métro à Bond Street ou Canary Wharf. Tu n’as jamais conduit ici, et c’est très bien comme ça.',
+  ],
+  gb_prestige_positions: [
+    'Tu connais le chemin des Cotswolds en voiture, les yeux presque fermés. Ton coffre tient un panier en osier.',
+    'Tes enfants sont dans une école dont le nom finit par "House". Cela t’a coûté cher.',
+  ],
+  gb_country_living: [
+    'Tu connais le rayon traiteur de Waitrose mieux que celui qui te le sert. Les saisons décident de ce que tu cuisines.',
+    'Tu as un Barbour dans ton entrée. Le pub du village te salue par ton prénom.',
+  ],
+  gb_suburban_stability: [
+    'Ton barbecue ressort dès que la pluie fait pause. Ton voisin a presque le même.',
+  ],
+  gb_domestic_success: [
+    'Tes vendredis finissent en pizza-Netflix. Tes samedis commencent au parc avec poussette.',
+  ],
+  gb_family_basics: [
+    'Tu fais tes courses chez Aldi le mercredi. Tu sais lequel des "Special Buys" vaut vraiment le coup.',
+    'Tu regardes le foot le samedi, pinte à la main. Tu sais combien coûte la pinte ce mois-ci.',
+  ],
+  gb_transient_renters: [
+    'Tu ne sais pas combien de temps tu vivras dans ton appartement. Tu n’as toujours pas accroché les cadres.',
+    'Ton frigo contient surtout des restes Deliveroo. Ta gym est plus pleine que ta cuisine.',
+  ],
+  gb_urban_cohesion: [
+    'Plusieurs accents se croisent dans ton couloir. Aucun n’est étranger ici.',
+    'Ton épicerie ouvre à 6h. Tu connais le prénom du patron, lui connaît tes tantes.',
+  ],
+
+  // FR
+  fr_aisance_urbaine: [
+    'Tu prends ton café au comptoir d’un endroit dont le nom n’est pas écrit en façade. Le serveur sait déjà.',
+    'Tu lis Mediapart en marchant. Tu connais l’emplacement des trois meilleurs cinémas indépendants de ton arrondissement.',
+  ],
+  fr_bourgeoisie_provinciale: [
+    'Tu connais le marché du samedi matin par les noms des producteurs. Le poissonnier garde le bar pour toi.',
+    'Tu pars en week-end à La Rochelle ou Cap Ferret. La voiture est familiale, propre, allemande.',
+  ],
+  fr_heritage_provincial: [
+    'Ton mécanicien t’appelle par ton prénom. Ta voiture a plus de cinq ans, elle sent le bois.',
+    'Tu écoutes France Bleu dans la cuisine. Le journaliste local te connaît, et inversement.',
+  ],
+  fr_familles_peri_urbaines: [
+    'Tes courses du samedi matin tiennent en deux chariots. La voiture est garée à la place habituelle.',
+    'Tes vacances sont à Center Parcs ou en camping 4 étoiles. Les enfants ont leur copain dans le lotissement.',
+  ],
+  fr_tradition_ruralite: [
+    'Tu connais le bruit du tracteur du voisin. Il commence à six heures, du printemps à l’automne.',
+    'Tu vas à la messe ou pas, mais tu connais l’heure des cloches. Tu sais qui tient le bistrot du bourg.',
+  ],
+  fr_classes_populaires: [
+    'Tu connais les promos Lidl par cœur. Tu sais aussi quel jour ils refont les rayons.',
+    'Tu regardes les matchs au bar du coin. Tu sais combien coûte le forfait Free du mois.',
+  ],
+  fr_urbanite_sociale: [
+    'Ton quartier sent le café et la coriandre. Les terrasses sont pleines même à l’heure d’apéro.',
+    'Tu connais trois langues sur ton palier. La concierge connaît tout le monde mais ne dit rien.',
+  ],
+  fr_jeunes_mobiles: [
+    'Tu déménages plus souvent que tu ne le devrais. Ta caisse de livres est toujours prête.',
+    'Ton frigo contient une bière, deux yaourts et un reste de pad thaï. Le wifi du coloc s’appelle "Internet_2.4".',
+  ],
+
+  // ES
+  es_exito_profesional: [
+    'Tomas el café en barra, de pie, leyendo El País. El camarero te reconoce pero no te lo demuestra.',
+    'Tu metro es Salamanca o Eixample. La calle huele a churros y a perfume cher.',
+  ],
+  es_vida_confortable: [
+    'Tus fines de semana se pasan en la sierra o en la casa de familia. El maletero está lleno de esquís ou de palas.',
+  ],
+  es_estabilidad_local: [
+    'Caminas por el barrio al anochecer. Saludas a los mismos vecinos desde hace diez años.',
+    'Tu Mercadona te conoce. Tu cafetera es italiana, vieja, y aún funciona.',
+  ],
+  es_juventud_dinamica: [
+    'Pides tapas low-cost en Glovo después de medianoche. Por la mañana, prometes que pararás.',
+    'Tu Erasmus terminó hace dos años. Tu cuenta de Spotify sigue en alemán o italiano.',
+  ],
+  es_raices_obreras: [
+    'Conoces los colores del equipo local de memoria. La camiseta del crío costó más de lo que querías.',
+    'Tu nevera lleva imanes de boda. El partido del domingo se ve en familia.',
+  ],
+  es_tradicion_rural: [
+    'Las fiestas patronales marcan tu año. Sacas tu mejor camisa cuando le toca a tu pueblo.',
+    'Tu vecino te trae naranjas, aceitunas o miel. Tú le devuelves un favor cuyo nombre nadie escribe.',
+  ],
+};
+
 const WESTIN_FRAGMENTS = {
   fundamentalist: { theme: 'privacy', text: 'Tu as fermé plus de portes que tu n’en as ouvertes. Tu t’es bâti une forteresse. L’Oracle t’y reconnaît quand même.' },
   pragmatist:     { theme: 'privacy', text: 'Tu dis non quand on te demande, pas toujours, mais souvent. L’Oracle connaît les deux versions de toi.' },
@@ -345,6 +442,19 @@ export function compose(profilerResult, psycho) {
           score: 18,
         });
       }
+    }
+
+    // 5. Mosaic : une phrase ultra-localisée tirée du segment géographique.
+    // Score élevé (le segment est l'inférence la plus précise dont on dispose),
+    // theme = 'mosaic' → au plus une phrase Mosaic par transe.
+    const mosaicId = psycho.mosaic?.id;
+    const mosaicPool = mosaicId ? MOSAIC_FRAGMENTS[mosaicId] : null;
+    if (mosaicPool?.length) {
+      candidates.push({
+        theme: 'mosaic',
+        text: pick(mosaicPool),
+        score: 50,
+      });
     }
   }
 

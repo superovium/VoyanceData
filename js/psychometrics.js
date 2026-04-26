@@ -400,31 +400,56 @@ const TRAIT_CONSUMER = {
 };
 
 /**
- * À partir du vecteur Big Five, renvoie une liste de "sides" (trait × direction)
- * significatifs, avec leurs préférences associées et la source.
+ * Renvoie une liste de "sides" qui décrivent le profil consommateur probable :
+ *   - 1 side de type 'mosaic' (en tête) si un segment géographique est résolu,
+ *     avec marques et habitudes typiques du quartier.
+ *   - n sides de type 'ocean' (1 par trait Big Five saillant), avec marques
+ *     et habitudes corrélées au trait.
  * @param {{O:number,C:number,E:number,A:number,N:number}} traits
+ * @param {object|null} mosaic — segment renvoyé par mosaicSegment(), ou null
+ * @param {number} threshold — seuil |z| pour qu'un trait OCEAN soit affiché
  */
-export function consumerProfile(traits, threshold = 0.2) {
+export function consumerProfile(traits, mosaic = null, threshold = 0.2) {
   const sides = [];
+
+  // 1. Bloc Mosaic en tête (le plus localisé donc le plus saillant).
+  if (mosaic) {
+    sides.push({
+      kind: 'mosaic',
+      label: mosaic.label,
+      code: `${mosaic.country}-${mosaic.code}`,
+      country: mosaic.country,
+      description: mosaic.description,
+      likes:  (mosaic.typical?.likes  ?? []).slice(0, 5),
+      brands: (mosaic.typical?.brands ?? []).slice(0, 6),
+      avoids: (mosaic.typical?.avoids ?? []).slice(0, 3),
+      source: mosaic.source,
+    });
+  }
+
+  // 2. Blocs OCEAN, triés par écart absolu décroissant.
+  const oceanSides = [];
   for (const t of ['O','C','E','A','N']) {
     const v = traits[t] ?? 0;
     if (Math.abs(v) < threshold) continue;
     const direction = v > 0 ? 'high' : 'low';
     const bundle = TRAIT_CONSUMER[t]?.[direction];
     if (!bundle) continue;
-    sides.push({
+    oceanSides.push({
+      kind: 'ocean',
       trait: t,
       traitLabel: TRAIT_LABELS[t],
       direction,
       z: v,
-      likes: bundle.likes,
+      likes:  bundle.likes,
       brands: bundle.brands,
       avoids: bundle.avoids,
       source: TRAIT_CONSUMER[t].source,
     });
   }
-  // Trier par écart absolu, le trait le plus saillant d'abord.
-  sides.sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+  oceanSides.sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+  sides.push(...oceanSides);
+
   return sides;
 }
 
@@ -453,7 +478,7 @@ export function analyze(report) {
   const westin  = westinSegment(report);
   const chrono  = chronotype(report);
   const mosaic  = mosaicSegment(report);
-  const consumer = consumerProfile(bigFive.traits);
+  const consumer = consumerProfile(bigFive.traits, mosaic);
   return { bigFive, westin, chrono, mosaic, consumer };
 }
 

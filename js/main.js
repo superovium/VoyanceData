@@ -394,6 +394,39 @@ const buildPsychometrics = (psycho) => {
   const consumerHtml = consumer.length === 0
     ? `<p class="psy-empty">Portrait trop proche de la moyenne : aucune préférence conso saillante.</p>`
     : consumer.map((side) => {
+        const chips = (arr, cls) => arr.map((x) =>
+          `<span class="psy-chip ${cls}">${escapeHtml(x)}</span>`
+        ).join('');
+
+        // Bloc Mosaic (segment géographique)
+        if (side.kind === 'mosaic') {
+          return `
+            <div class="psy-consumer-block psy-consumer-mosaic">
+              <h4>
+                <span class="psy-trait-name">📍 ${escapeHtml(side.label)}</span>
+                <span class="psy-z">${escapeHtml(side.code)}</span>
+              </h4>
+              <p class="psy-text" style="margin:.2rem 0 .6rem; font-size:.78rem;">${escapeHtml(side.description)}</p>
+              <div class="psy-chip-group">
+                <span class="psy-chip-label">Marques du quartier&nbsp;:</span>
+                ${chips(side.brands, 'psy-chip-brand')}
+              </div>
+              <div class="psy-chip-group">
+                <span class="psy-chip-label">Habitudes locales&nbsp;:</span>
+                ${chips(side.likes, 'psy-chip-like')}
+              </div>
+              ${side.avoids.length ? `
+                <div class="psy-chip-group">
+                  <span class="psy-chip-label">Évite généralement&nbsp;:</span>
+                  ${chips(side.avoids, 'psy-chip-avoid')}
+                </div>
+              ` : ''}
+              <cite class="psy-source">${escapeHtml(side.source)}</cite>
+            </div>
+          `;
+        }
+
+        // Bloc OCEAN (trait Big Five)
         const arrow = side.direction === 'high' ? '↑' : '↓';
         return `
           <div class="psy-consumer-block">
@@ -402,12 +435,12 @@ const buildPsychometrics = (psycho) => {
               <span class="psy-z">${side.z >= 0 ? '+' : ''}${side.z.toFixed(2)}σ</span>
             </h4>
             <div class="psy-chip-group">
-              <span class="psy-chip-label">Appétences :</span>
-              ${side.likes.map((x) => `<span class="psy-chip psy-chip-like">${escapeHtml(x)}</span>`).join('')}
+              <span class="psy-chip-label">Appétences&nbsp;:</span>
+              ${chips(side.likes, 'psy-chip-like')}
             </div>
             <div class="psy-chip-group">
-              <span class="psy-chip-label">Marques typiques :</span>
-              ${side.brands.map((x) => `<span class="psy-chip psy-chip-brand">${escapeHtml(x)}</span>`).join('')}
+              <span class="psy-chip-label">Marques typiques&nbsp;:</span>
+              ${chips(side.brands, 'psy-chip-brand')}
             </div>
             <cite class="psy-source">${escapeHtml(side.source)}</cite>
           </div>
@@ -425,7 +458,7 @@ const buildPsychometrics = (psycho) => {
       </div>
 
       <div class="psy-section psy-consumer">
-        <h3>Profil consommateur probable <span class="psy-sub">(dérivé du portrait OCEAN)</span></h3>
+        <h3>Profil consommateur probable <span class="psy-sub">(croisement segment géographique × OCEAN)</span></h3>
         ${consumerHtml}
         <p class="psy-warning">
           ⚠ Ces prédictions sont <strong>probabilistes</strong> et tirées de corrélations de groupe :
