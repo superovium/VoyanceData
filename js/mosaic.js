@@ -128,6 +128,113 @@ export const SEGMENTS = {
     },
     source: 'Experian Mosaic UK 2024 — Group N ; ONS OAC 2021 2A "Ethnicity Central"',
   },
+
+  // -------------------------------------------------------------------------
+  // FRANCE (Mosaic France groupes A, B, C, D, E, H, I, J)
+  // -------------------------------------------------------------------------
+  fr_aisance_urbaine: {
+    country: 'FR',
+    code: 'A',
+    label: 'Aisance Urbaine',
+    description: 'Cadres supérieurs et professions libérales des arrondissements centraux de Paris et premier cercle aisé (Neuilly, Boulogne, Versailles). Patrimoine élevé, locataires haut de gamme ou propriétaires.',
+    typical: {
+      brands: ['Le Bon Marché', 'Mediapart', 'Le Monde', 'Sézane', 'Apple', 'Tesla', 'Bocage', 'Maison Plisson'],
+      likes:  ['cinéma d’auteur', 'théâtre', 'vins natures', 'voyages culturels', 'galeries', 'podcasts France Culture'],
+      avoids: ['hypermarchés périurbains', 'TF1', 'fast-food'],
+    },
+    source: 'Experian Mosaic France — Groupe A ; INSEE IRIS 2024 catégorie "Cadres CSP+"',
+  },
+
+  fr_bourgeoisie_provinciale: {
+    country: 'FR',
+    code: 'B',
+    label: 'Bourgeoisie Provinciale',
+    description: 'Centres bourgeois de grandes villes régionales (Lyon presqu’île, Bordeaux centre, Nantes, Nice ouest). Familles installées, biens immobiliers, écoles privées fréquentes.',
+    typical: {
+      brands: ['Monoprix', 'Le Figaro', 'Picard', 'La Redoute', 'Volvo', 'Décathlon', 'Maison du Monde'],
+      likes:  ['week-ends gastronomiques', 'rugby', 'voile', 'France Inter', 'séries France 5'],
+      avoids: ['hard-discount', 'téléréalité'],
+    },
+    source: 'Experian Mosaic France — Groupe B ; INSEE 2024 "Centres-villes aisés province"',
+  },
+
+  fr_heritage_provincial: {
+    country: 'FR',
+    code: 'C',
+    label: 'Héritage Provincial',
+    description: 'Petites villes et chefs-lieux de département à population vieillissante mais aisée. Propriétaires anciens, attachement régional fort, consommation de proximité.',
+    typical: {
+      brands: ['Système U', 'Intermarché', 'Renault', 'Le Pèlerin', 'Géo', 'France 3 régions'],
+      likes:  ['marchés de province', 'tour de France', 'pétanque', 'concours cuisine régionale', 'jardinage'],
+      avoids: ['streaming', 'livraison à domicile'],
+    },
+    source: 'Experian Mosaic France — Groupe C ; INSEE "Bourgs ruraux dynamiques"',
+  },
+
+  fr_familles_peri_urbaines: {
+    country: 'FR',
+    code: 'D',
+    label: 'Familles Péri-urbaines',
+    description: 'Pavillons des couronnes périurbaines des grandes villes (77, 78, 91, 95 banlieues nord-ouest, banlieues lyonnaises). Doubles revenus, deux voitures, crédit en cours.',
+    typical: {
+      brands: ['Carrefour', 'Leclerc', 'Renault', 'Boulanger', 'Brico Dépôt', 'Disney+', 'McDonald’s'],
+      likes:  ['Center Parcs', 'Disneyland', 'football', 'parcs aquatiques', 'TF1 prime'],
+      avoids: ['transports en commun', 'centres-villes piétons'],
+    },
+    source: 'Experian Mosaic France — Groupe D ; INSEE "Péri-urbain pavillonnaire"',
+  },
+
+  fr_tradition_ruralite: {
+    country: 'FR',
+    code: 'E',
+    label: 'Tradition Ruralité',
+    description: 'Communes rurales du centre, du Massif central, de la Bretagne intérieure. Population âgée, agriculteurs et retraités, faible mobilité, ancrage local fort.',
+    typical: {
+      brands: ['Système U', 'Crédit Agricole', 'Peugeot', 'Le Chasseur français', 'Citroën', 'France Bleu'],
+      likes:  ['chasse', 'pêche', 'jardinage', 'bricolage', 'vide-greniers', 'France 3 le 19/20'],
+      avoids: ['applis bancaires', 'cuisines du monde'],
+    },
+    source: 'Experian Mosaic France — Groupe E ; INSEE "Rural traditionnel"',
+  },
+
+  fr_classes_populaires: {
+    country: 'FR',
+    code: 'H',
+    label: 'Classes Populaires',
+    description: 'Banlieues ouvrières du Nord, Pas-de-Calais, Seine-Saint-Denis, ceintures de Marseille, Lille. Locataires, revenus modestes, aides sociales fréquentes.',
+    typical: {
+      brands: ['Lidl', 'Aldi', 'Action', 'Kiabi', 'BFM TV', 'Free Mobile', 'Stellantis bas de gamme'],
+      likes:  ['paris sportifs', 'football', 'téléréalité', 'cuisine maghrébine', 'WhatsApp groupes'],
+      avoids: ['marques bio', 'Le Monde'],
+    },
+    source: 'Experian Mosaic France — Groupe H ; INSEE "Quartiers prioritaires"',
+  },
+
+  fr_urbanite_sociale: {
+    country: 'FR',
+    code: 'I',
+    label: 'Urbanité Sociale',
+    description: 'Centres de villes moyennes mixtes socialement (Marseille centre, Lille centre, Toulouse, Strasbourg, Bordeaux périphérique). Locataires actifs, vie de quartier dense.',
+    typical: {
+      brands: ['Monoprix', 'Frichti', 'Deliveroo', 'Vinted', 'Le Slip Français', 'BlaBlaCar', 'Citymapper'],
+      likes:  ['festivals locaux', 'cuisine méditerranéenne', 'velo en ville', 'concerts', 'podcasts Binge'],
+      avoids: ['voitures individuelles', 'centres commerciaux'],
+    },
+    source: 'Experian Mosaic France — Groupe I ; INSEE "Centres villes moyennes"',
+  },
+
+  fr_jeunes_mobiles: {
+    country: 'FR',
+    code: 'J',
+    label: 'Jeunes & Mobiles',
+    description: 'Étudiants et jeunes actifs en colocation des grandes villes universitaires (Paris 19-20, Rennes, Montpellier, Lyon Croix-Rousse). Locataires courte durée, mobilité élevée.',
+    typical: {
+      brands: ['Spotify', 'Netflix', 'Vinted', 'BlaBlaCar', 'Trainline', 'Lydia', 'Brut.', 'Konbini'],
+      likes:  ['festivals', 'rap français', 'cinéma indé', 'street food', 'apps de rencontre'],
+      avoids: ['TF1', 'voitures', 'crédit immo'],
+    },
+    source: 'Experian Mosaic France — Groupe J ; INSEE "Étudiants et jeunes actifs"',
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -221,6 +328,128 @@ const UK_POSTCODE_MAP = {
 };
 
 // ---------------------------------------------------------------------------
+// FR DÉPARTEMENT → SEGMENT (2 premiers chiffres du code postal)
+// Source : INSEE IRIS 2024 + revenu médian par département + typologie urbaine
+// commune (Eurostat NUTS-3 urban-rural). Approximation au niveau département.
+// ---------------------------------------------------------------------------
+const FR_DEPT_MAP = {
+  // --- Aisance Urbaine ---
+  '75': 'fr_aisance_urbaine',          // Paris
+  '92': 'fr_aisance_urbaine',          // Hauts-de-Seine
+  // --- Bourgeoisie Provinciale ---
+  '06': 'fr_bourgeoisie_provinciale',  // Alpes-Maritimes
+  '33': 'fr_bourgeoisie_provinciale',  // Gironde (Bordeaux)
+  '44': 'fr_bourgeoisie_provinciale',  // Loire-Atlantique (Nantes)
+  '69': 'fr_bourgeoisie_provinciale',  // Rhône (Lyon)
+  '74': 'fr_bourgeoisie_provinciale',  // Haute-Savoie
+  '78': 'fr_bourgeoisie_provinciale',  // Yvelines (Versailles)
+  '83': 'fr_bourgeoisie_provinciale',  // Var (Toulon, Hyères, Saint-Tropez)
+  // --- Familles Péri-urbaines ---
+  '77': 'fr_familles_peri_urbaines',   // Seine-et-Marne
+  '91': 'fr_familles_peri_urbaines',   // Essonne
+  '95': 'fr_familles_peri_urbaines',   // Val-d’Oise
+  '45': 'fr_familles_peri_urbaines',   // Loiret
+  '01': 'fr_familles_peri_urbaines',   // Ain (banlieue Lyon)
+  '38': 'fr_familles_peri_urbaines',   // Isère (Grenoble)
+  '60': 'fr_familles_peri_urbaines',   // Oise
+  // --- Urbanité Sociale ---
+  '13': 'fr_urbanite_sociale',         // Bouches-du-Rhône (Marseille)
+  '31': 'fr_urbanite_sociale',         // Haute-Garonne (Toulouse)
+  '34': 'fr_urbanite_sociale',         // Hérault (Montpellier)
+  '67': 'fr_urbanite_sociale',         // Bas-Rhin (Strasbourg)
+  '94': 'fr_urbanite_sociale',         // Val-de-Marne
+  '35': 'fr_urbanite_sociale',         // Ille-et-Vilaine (Rennes)
+  // --- Jeunes & Mobiles : aucun dept entier, on saute ce niveau ---
+  // --- Classes Populaires ---
+  '93': 'fr_classes_populaires',       // Seine-Saint-Denis
+  '59': 'fr_classes_populaires',       // Nord
+  '62': 'fr_classes_populaires',       // Pas-de-Calais
+  '76': 'fr_classes_populaires',       // Seine-Maritime
+  '80': 'fr_classes_populaires',       // Somme
+  '02': 'fr_classes_populaires',       // Aisne
+  '08': 'fr_classes_populaires',       // Ardennes
+  '54': 'fr_classes_populaires',       // Meurthe-et-Moselle
+  '57': 'fr_classes_populaires',       // Moselle
+  // --- Héritage Provincial (villes moyennes & bourgs aisés) ---
+  '14': 'fr_heritage_provincial',      // Calvados
+  '17': 'fr_heritage_provincial',      // Charente-Maritime
+  '21': 'fr_heritage_provincial',      // Côte-d’Or
+  '25': 'fr_heritage_provincial',      // Doubs
+  '26': 'fr_heritage_provincial',      // Drôme
+  '27': 'fr_heritage_provincial',      // Eure
+  '28': 'fr_heritage_provincial',      // Eure-et-Loir
+  '29': 'fr_heritage_provincial',      // Finistère
+  '37': 'fr_heritage_provincial',      // Indre-et-Loire
+  '41': 'fr_heritage_provincial',      // Loir-et-Cher
+  '42': 'fr_heritage_provincial',      // Loire
+  '49': 'fr_heritage_provincial',      // Maine-et-Loire
+  '50': 'fr_heritage_provincial',      // Manche
+  '51': 'fr_heritage_provincial',      // Marne
+  '53': 'fr_heritage_provincial',      // Mayenne
+  '56': 'fr_heritage_provincial',      // Morbihan
+  '63': 'fr_heritage_provincial',      // Puy-de-Dôme
+  '66': 'fr_heritage_provincial',      // Pyrénées-Orientales
+  '68': 'fr_heritage_provincial',      // Haut-Rhin
+  '71': 'fr_heritage_provincial',      // Saône-et-Loire
+  '72': 'fr_heritage_provincial',      // Sarthe
+  '73': 'fr_heritage_provincial',      // Savoie
+  '85': 'fr_heritage_provincial',      // Vendée
+  // --- Tradition Ruralité ---
+  '03': 'fr_tradition_ruralite',       // Allier
+  '04': 'fr_tradition_ruralite',       // Alpes-de-Haute-Provence
+  '05': 'fr_tradition_ruralite',       // Hautes-Alpes
+  '07': 'fr_tradition_ruralite',       // Ardèche
+  '09': 'fr_tradition_ruralite',       // Ariège
+  '10': 'fr_tradition_ruralite',       // Aube
+  '11': 'fr_tradition_ruralite',       // Aude
+  '12': 'fr_tradition_ruralite',       // Aveyron
+  '15': 'fr_tradition_ruralite',       // Cantal
+  '16': 'fr_tradition_ruralite',       // Charente
+  '18': 'fr_tradition_ruralite',       // Cher
+  '19': 'fr_tradition_ruralite',       // Corrèze
+  '22': 'fr_tradition_ruralite',       // Côtes-d’Armor
+  '23': 'fr_tradition_ruralite',       // Creuse
+  '24': 'fr_tradition_ruralite',       // Dordogne
+  '32': 'fr_tradition_ruralite',       // Gers
+  '36': 'fr_tradition_ruralite',       // Indre
+  '39': 'fr_tradition_ruralite',       // Jura
+  '40': 'fr_tradition_ruralite',       // Landes
+  '43': 'fr_tradition_ruralite',       // Haute-Loire
+  '46': 'fr_tradition_ruralite',       // Lot
+  '47': 'fr_tradition_ruralite',       // Lot-et-Garonne
+  '48': 'fr_tradition_ruralite',       // Lozère
+  '52': 'fr_tradition_ruralite',       // Haute-Marne
+  '55': 'fr_tradition_ruralite',       // Meuse
+  '58': 'fr_tradition_ruralite',       // Nièvre
+  '61': 'fr_tradition_ruralite',       // Orne
+  '64': 'fr_tradition_ruralite',       // Pyrénées-Atlantiques
+  '65': 'fr_tradition_ruralite',       // Hautes-Pyrénées
+  '70': 'fr_tradition_ruralite',       // Haute-Saône
+  '79': 'fr_tradition_ruralite',       // Deux-Sèvres
+  '81': 'fr_tradition_ruralite',       // Tarn
+  '82': 'fr_tradition_ruralite',       // Tarn-et-Garonne
+  '84': 'fr_tradition_ruralite',       // Vaucluse
+  '86': 'fr_tradition_ruralite',       // Vienne
+  '87': 'fr_tradition_ruralite',       // Haute-Vienne
+  '88': 'fr_tradition_ruralite',       // Vosges
+  '89': 'fr_tradition_ruralite',       // Yonne
+  '90': 'fr_tradition_ruralite',       // Territoire de Belfort
+  '20': 'fr_tradition_ruralite',       // Corse (2A/2B → 20…)
+  '30': 'fr_tradition_ruralite',       // Gard
+  // --- DOM ---
+  '97': 'fr_classes_populaires',       // Guadeloupe/Martinique/Guyane/Réunion
+  '98': 'fr_classes_populaires',       // Mayotte / TOM
+};
+
+function lookupFR(postal) {
+  if (!postal) return null;
+  const clean = String(postal).replace(/\s+/g, '');
+  const m = clean.match(/^(\d{2})/);
+  if (!m) return null;
+  return FR_DEPT_MAP[m[1]] ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // Lookup principal
 // ---------------------------------------------------------------------------
 
@@ -264,7 +493,8 @@ export function mosaicSegment(report) {
 
   let id = null;
   if (cc === 'GB') id = lookupGB(postal);
-  // FR et ES seront ajoutés dans les étapes suivantes.
+  else if (cc === 'FR') id = lookupFR(postal);
+  // ES sera ajouté à l'étape suivante.
 
   if (!id) return null;
   const seg = SEGMENTS[id];
