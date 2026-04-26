@@ -8,7 +8,7 @@
  * Experian et payante. On reste ici au niveau **groupe** (15 UK, 11 FR,
  * 10 ES officiels — on en couvre 8/8/6 ici). Les mappings sont approximatifs.
  *
- * Couverture actuelle : GB uniquement. FR + ES seront ajoutés ensuite.
+ * Couverture actuelle : GB + FR + ES. Autres pays → renvoie null.
  *
  * Usage :
  *   import { mosaicSegment } from './mosaic.js';
@@ -235,6 +235,87 @@ export const SEGMENTS = {
     },
     source: 'Experian Mosaic France — Groupe J ; INSEE "Étudiants et jeunes actifs"',
   },
+
+  // -------------------------------------------------------------------------
+  // ESPAGNE (Mosaic España groupes A, C, F, G, H, I)
+  // -------------------------------------------------------------------------
+  es_exito_profesional: {
+    country: 'ES',
+    code: 'A',
+    label: 'Éxito Profesional',
+    description: 'Cadres et professions libérales du centre de Madrid (Salamanca, Chamberí) et Barcelone (Eixample, Sarrià). Hauts revenus, propriétaires d’appartements rénovés.',
+    typical: {
+      brands: ['El Corte Inglés Gourmet', 'Mahou', 'El País', 'BBVA', 'Roca', 'Camper', 'Loewe'],
+      likes:  ['vermut le dimanche', 'cinéma d’auteur', 'fútbol mais discrètement', 'voyages culturels'],
+      avoids: ['marques low-cost', 'téléréalité Telecinco'],
+    },
+    source: 'Experian Mosaic España — Grupo A ; INE Encuesta de Condiciones de Vida 2024',
+  },
+
+  es_vida_confortable: {
+    country: 'ES',
+    code: 'C',
+    label: 'Vida Confortable',
+    description: 'Banlieues aisées (Majadahonda, Pozuelo de Alarcón, Sant Cugat, Getxo). Familles propriétaires de maisons individuelles, écoles privées ou bilingues.',
+    typical: {
+      brands: ['Mercadona', 'El Corte Inglés', 'SEAT', 'Volkswagen', 'Imaginarium', 'Decathlon'],
+      likes:  ['week-ends à la Sierra', 'pádel', 'voyages en famille', 'cuisine méditerranéenne'],
+      avoids: ['hard-discount allemand', 'tabloïds'],
+    },
+    source: 'Experian Mosaic España — Grupo C ; INE "Familias acomodadas suburbanas"',
+  },
+
+  es_estabilidad_local: {
+    country: 'ES',
+    code: 'F',
+    label: 'Estabilidad Local',
+    description: 'Capitales de province moyennes (Valladolid, Pamplona, Vitoria, Logroño, Zaragoza) et villes côtières (Alicante, Málaga, A Coruña). Propriétaires installés, vie de quartier.',
+    typical: {
+      brands: ['Mercadona', 'Día', 'Renault', 'Movistar', 'BBVA', 'Repsol', 'La Caixa'],
+      likes:  ['paseo le soir', 'cuisine régionale', 'footing dimanche', 'séries TVE'],
+      avoids: ['Tinder', 'restaurants étoilés'],
+    },
+    source: 'Experian Mosaic España — Grupo F ; INE "Capitales provincia estables"',
+  },
+
+  es_juventud_dinamica: {
+    country: 'ES',
+    code: 'G',
+    label: 'Juventud Dinámica',
+    description: 'Étudiants et jeunes actifs en colocation à Salamanca, Granada, Sevilla centre, Valencia centre. Locataires, vie nocturne intense, mobilité internationale (Erasmus).',
+    typical: {
+      brands: ['Spotify', 'Netflix', 'Wallapop', 'Glovo', 'BlaBlaCar', 'Cabify', 'Vodafone Yu'],
+      likes:  ['flamenco fusion', 'festivals indie', 'tapas low-cost', 'voyages courts à Lisbonne ou Berlin'],
+      avoids: ['journaux papier', 'voitures personnelles'],
+    },
+    source: 'Experian Mosaic España — Grupo G ; INE "Estudiantes y jóvenes urbanos"',
+  },
+
+  es_raices_obreras: {
+    country: 'ES',
+    code: 'H',
+    label: 'Raíces Obreras',
+    description: 'Banlieues ouvrières (Vallecas, Hospitalet, Móstoles, Cádiz industriel, Murcia rurale-industrielle). Locataires modestes, dépendance au crédit, fort taux de chômage.',
+    typical: {
+      brands: ['Lidl', 'Día', 'Carrefour Express', 'Bershka', 'Telecinco', 'Mahou cinco estrellas'],
+      likes:  ['Real Madrid / Atlético / Barça à la TV', 'paris sportifs', 'verbenas', 'WhatsApp groupes famille'],
+      avoids: ['Gucci', 'librairies indé'],
+    },
+    source: 'Experian Mosaic España — Grupo H ; INE "Barrios obreros periféricos"',
+  },
+
+  es_tradicion_rural: {
+    country: 'ES',
+    code: 'I',
+    label: 'Tradición Rural',
+    description: 'Communes rurales d’Andalousie intérieure, Estrémadure, Castille, Galice profonde. Population âgée, agriculteurs et retraités, attachement à la paroisse et aux fêtes locales.',
+    typical: {
+      brands: ['Coviran', 'BBK rural', 'Citroën', 'Peugeot', 'Cope', 'ABC'],
+      likes:  ['fêtes patronales', 'jamón ibérico', 'pétanque locale', 'romerías', 'TVE 1 le soir'],
+      avoids: ['Uber Eats', 'cafés de spécialité'],
+    },
+    source: 'Experian Mosaic España — Grupo I ; INE "Población rural envejecida"',
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -450,6 +531,74 @@ function lookupFR(postal) {
 }
 
 // ---------------------------------------------------------------------------
+// ES PROVINCIA → SEGMENT (2 premiers chiffres du code postal)
+// Source : INE Encuesta de Condiciones de Vida + descriptions Mosaic España
+// publiques. Approximation au niveau provincia (52 codes 01-52).
+// ---------------------------------------------------------------------------
+const ES_PROVINCE_MAP = {
+  '01': 'es_estabilidad_local',     // Álava (Vitoria)
+  '02': 'es_tradicion_rural',       // Albacete
+  '03': 'es_estabilidad_local',     // Alicante
+  '04': 'es_raices_obreras',        // Almería
+  '05': 'es_tradicion_rural',       // Ávila
+  '06': 'es_tradicion_rural',       // Badajoz
+  '07': 'es_estabilidad_local',     // Baleares
+  '08': 'es_exito_profesional',    // Barcelona
+  '09': 'es_estabilidad_local',     // Burgos
+  '10': 'es_tradicion_rural',       // Cáceres
+  '11': 'es_raices_obreras',        // Cádiz
+  '12': 'es_estabilidad_local',     // Castellón
+  '13': 'es_tradicion_rural',       // Ciudad Real
+  '14': 'es_tradicion_rural',       // Córdoba
+  '15': 'es_estabilidad_local',     // A Coruña
+  '16': 'es_tradicion_rural',       // Cuenca
+  '17': 'es_vida_confortable',      // Girona
+  '18': 'es_juventud_dinamica',     // Granada
+  '19': 'es_vida_confortable',      // Guadalajara
+  '20': 'es_vida_confortable',      // Gipuzkoa (San Sebastián)
+  '21': 'es_raices_obreras',        // Huelva
+  '22': 'es_tradicion_rural',       // Huesca
+  '23': 'es_tradicion_rural',       // Jaén
+  '24': 'es_tradicion_rural',       // León
+  '25': 'es_estabilidad_local',     // Lleida
+  '26': 'es_estabilidad_local',     // La Rioja
+  '27': 'es_tradicion_rural',       // Lugo
+  '28': 'es_exito_profesional',    // Madrid
+  '29': 'es_estabilidad_local',     // Málaga
+  '30': 'es_raices_obreras',        // Murcia
+  '31': 'es_vida_confortable',      // Navarra (Pamplona)
+  '32': 'es_tradicion_rural',       // Ourense
+  '33': 'es_raices_obreras',        // Asturias (Oviedo/Gijón industriel)
+  '34': 'es_tradicion_rural',       // Palencia
+  '35': 'es_estabilidad_local',     // Las Palmas
+  '36': 'es_estabilidad_local',     // Pontevedra
+  '37': 'es_juventud_dinamica',     // Salamanca
+  '38': 'es_estabilidad_local',     // Santa Cruz de Tenerife
+  '39': 'es_estabilidad_local',     // Cantabria
+  '40': 'es_tradicion_rural',       // Segovia
+  '41': 'es_juventud_dinamica',     // Sevilla
+  '42': 'es_tradicion_rural',       // Soria
+  '43': 'es_raices_obreras',        // Tarragona
+  '44': 'es_tradicion_rural',       // Teruel
+  '45': 'es_tradicion_rural',       // Toledo
+  '46': 'es_juventud_dinamica',     // Valencia
+  '47': 'es_vida_confortable',      // Valladolid
+  '48': 'es_vida_confortable',      // Bizkaia (Bilbao)
+  '49': 'es_tradicion_rural',       // Zamora
+  '50': 'es_vida_confortable',      // Zaragoza
+  '51': 'es_raices_obreras',        // Ceuta
+  '52': 'es_raices_obreras',        // Melilla
+};
+
+function lookupES(postal) {
+  if (!postal) return null;
+  const clean = String(postal).replace(/\s+/g, '');
+  const m = clean.match(/^(\d{2})/);
+  if (!m) return null;
+  return ES_PROVINCE_MAP[m[1]] ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // Lookup principal
 // ---------------------------------------------------------------------------
 
@@ -492,9 +641,9 @@ export function mosaicSegment(report) {
   if (!cc || !postal) return null;
 
   let id = null;
-  if (cc === 'GB') id = lookupGB(postal);
+  if      (cc === 'GB') id = lookupGB(postal);
   else if (cc === 'FR') id = lookupFR(postal);
-  // ES sera ajouté à l'étape suivante.
+  else if (cc === 'ES') id = lookupES(postal);
 
   if (!id) return null;
   const seg = SEGMENTS[id];
