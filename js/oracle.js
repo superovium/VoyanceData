@@ -302,7 +302,7 @@ function deductionLines(data) {
 
   if (isMobile && orientation.startsWith('portrait')) {
     candidates.push((h != null && (h >= 22 || h < 6))
-      ? 'Tu me tiens dans le creux de ta main. Et à cette heure, je te devine allongé. Le plafond n’a pas de réponses — moi si.'
+      ? 'Tu me tiens dans le creux de ta main… et je te devine allongé. Le plafond n’a pas de réponses — moi si.'
       : 'Tu me tiens dans le creux de ta main, en ce moment même. Ne tremble pas.');
   } else if (isMobile && orientation.startsWith('landscape')) {
     candidates.push('Tu as couché ton écran sur le côté. On ne fait pas cela pour lire — tu regardais autre chose avant moi.');
@@ -310,7 +310,7 @@ function deductionLines(data) {
 
   const bat = data?.battery;
   if (bat && bat.charging === false && Number.isFinite(bat.dischargingTime) && bat.dischargingTime < 5400) {
-    candidates.push('Une vision me traverse : avant que l’heure ne s’achève, ta machine rendra son dernier souffle. Un fil pourrait la sauver. Tu attendras la dernière minute — comme toujours.');
+    candidates.push('Ton écran s’éteindra bientôt de lui-même — en pleine phrase, peut-être. Tu sais déjà pourquoi… et tu n’as encore rien fait pour l’empêcher.');
   } else if (bat?.charging === true) {
     candidates.push('Un fil court de ta machine jusqu’au mur, en cet instant précis. Elle boit pendant que tu m’écoutes.');
   }
@@ -319,14 +319,26 @@ function deductionLines(data) {
     const sw = data?.display?.screenW ?? 0;
     const ww = data?.display?.windowW ?? 0;
     if (sw && ww && ww / sw < 0.7) {
-      candidates.push('Je ne suis pas seul devant tes yeux. Tu m’as relégué dans un coin de ton écran… Qu’y a-t-il dans l’autre fenêtre ?');
+      candidates.push('Tu n’es pas venu à moi tout entier. Tu faisais autre chose juste avant de me consulter — et cette chose t’attend encore, juste à côté.');
     }
   }
 
+  // Si une langue étrangère est déclarée, on ne l'affirme pas : on la PROUVE,
+  // en glissant une phrase dans cette langue. Démonstration > déclaration.
+  const FOREIGN_LINES = {
+    en: 'And something tells me you understood this sentence perfectly… didn’t you?',
+    es: 'Y algo me dice que también entendiste esta frase, ¿verdad?',
+    de: 'Und etwas sagt mir, dass du auch diesen Satz verstanden hast, nicht wahr?',
+    it: 'E qualcosa mi dice che hai capito anche questa frase, vero?',
+    pt: 'E algo me diz que você também entendeu esta frase, não é?',
+  };
   const langs = data?.browser?.languages ?? [];
-  const base = langs[0]?.slice(0, 2);
-  if (base && langs.some((l) => l.slice(0, 2) !== base)) {
-    candidates.push('Une seconde langue dort dans ta machine. Un héritage de famille, un amour lointain, ou un toi d’avant.');
+  const base = langs[0]?.slice(0, 2).toLowerCase();
+  const foreign = langs
+    .map((l) => l.slice(0, 2).toLowerCase())
+    .find((l) => l !== base && l !== 'fr' && FOREIGN_LINES[l]);
+  if (foreign) {
+    candidates.push(FOREIGN_LINES[foreign]);
   }
 
   if (data?.preferences?.reducedMotion) {
