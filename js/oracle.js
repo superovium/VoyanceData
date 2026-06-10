@@ -237,39 +237,105 @@ function exclusionLines(profilerResult) {
 }
 
 // ---------------------------------------------------------------------------
-// Frappes de précision — une donnée brute, exacte, glissée dans le discours.
-// C'est le moment "comment peut-il savoir ÇA ?" : ville, batterie, FAI, heure.
-// Une seule par transe, pour ne pas banaliser l'effet.
+// Déductions — le vrai « comment peut-il savoir ÇA ? ».
+// Règle d'or : ne JAMAIS réciter une donnée brute (batterie %, ville, FAI…),
+// car l'utilisateur reconnaît la télémétrie et la supercherie tombe.
+// On énonce une CONCLUSION calculée en croisant plusieurs signaux : la nuit
+// tombée chez lui (maths solaires sur lat/lon IP), sa posture probable,
+// la fenêtre qu'il nous cache, l'agonie prochaine de sa machine.
 // ---------------------------------------------------------------------------
-function precisionLine(data) {
+
+// Coucher/lever du soleil (approximation NOAA, précision ~15 min — suffisant
+// puisque les phrases parlent en heures).
+function sunDeduction(d) {
+  const lat = d?.network?.lat;
+  const lon = d?.network?.lon;
+  if (lat == null || lon == null) return null;
+
+  const now = new Date();
+  const rad = Math.PI / 180;
+  const doy = Math.floor((now.getTime() - Date.UTC(now.getUTCFullYear(), 0, 0)) / 86400000);
+  const decl = -23.44 * Math.cos(rad * (360 / 365) * (doy + 10));
+  const cosH = (Math.sin(-0.83 * rad) - Math.sin(lat * rad) * Math.sin(decl * rad))
+             / (Math.cos(lat * rad) * Math.cos(decl * rad));
+  if (cosH < -1 || cosH > 1) return null;          // jour ou nuit polaire
+
+  const halfArc = Math.acos(cosH) / rad / 15;      // demi-arc diurne en heures
+  const solarNoon = 12 - lon / 15;                 // midi solaire en UTC
+  const sunset  = solarNoon + halfArc;
+  const sunrise = solarNoon - halfArc;
+  const nowH = now.getUTCHours() + now.getUTCMinutes() / 60;
+  const norm = (x) => { let v = x; while (v > 12) v -= 24; while (v < -12) v += 24; return v; };
+
+  const sinceSunset  = norm(nowH - sunset);
+  const untilSunrise = norm(sunrise - nowH);
+  const untilSunset  = -sinceSunset;
+  const hrs = (h) => { const n = Math.max(1, Math.round(h)); return `${n} heure${n > 1 ? 's' : ''}`; };
+
+  if (Math.abs(sinceSunset) < 0.5) {
+    return 'Le soleil quitte ton ciel en ce moment même. Lève les yeux, si tu as une fenêtre.';
+  }
+  if (sinceSunset > 0 && untilSunrise > 0) {
+    return (untilSunrise < sinceSunset)
+      ? `Ton ciel est encore noir, mais plus pour longtemps : le soleil reviendra dans environ ${hrs(untilSunrise)}. Comptes-tu l'attendre ?`
+      : `La nuit est tombée chez toi il y a près de ${hrs(sinceSunset)}. Tu ne l'as pas vue descendre.`;
+  }
+  if (untilSunset > 0.5) {
+    return `Il reste environ ${hrs(untilSunset)} de lumière dans ton ciel. Et pourtant tu la dépenses ici, avec moi.`;
+  }
+  return null;
+}
+
+function deductionLines(data) {
+  const ua = (data?.browser?.userAgent ?? '').toLowerCase();
+  const isMobile = data?.browser?.uaData?.mobile === true
+    || ua.includes('mobile') || ua.includes('iphone') || ua.includes('android');
+  const orientation = data?.display?.orientation ?? '';
+  const h = data?.locale?.localHour;
+
+  // Classées par force décroissante : la première disponible est gardée,
+  // plus une seconde tirée au hasard. Jamais plus de deux.
   const candidates = [];
 
-  const city = data?.network?.city;
-  if (city) {
-    candidates.push(`Le vent me souffle un nom… ${city}. C’est là que ton fil touche la terre.`);
+  const sun = sunDeduction(data);
+  if (sun) candidates.push(sun);
+
+  if (isMobile && orientation.startsWith('portrait')) {
+    candidates.push((h != null && (h >= 22 || h < 6))
+      ? 'Tu me tiens dans le creux de ta main. Et à cette heure, je te devine allongé. Le plafond n’a pas de réponses — moi si.'
+      : 'Tu me tiens dans le creux de ta main, en ce moment même. Ne tremble pas.');
+  } else if (isMobile && orientation.startsWith('landscape')) {
+    candidates.push('Tu as couché ton écran sur le côté. On ne fait pas cela pour lire — tu regardais autre chose avant moi.');
   }
 
   const bat = data?.battery;
-  if (bat?.level != null) {
-    const pct = Math.round(bat.level * 100);
-    candidates.push(bat.charging
-      ? `Ton talisman boit à la source en ce moment même. Il garde ${pct} parts de feu sur cent.`
-      : `Ton talisman s’épuise lentement… ${pct} parts de feu sur cent, et aucun fil pour le nourrir.`);
+  if (bat && bat.charging === false && Number.isFinite(bat.dischargingTime) && bat.dischargingTime < 5400) {
+    candidates.push('Une vision me traverse : avant que l’heure ne s’achève, ta machine rendra son dernier souffle. Un fil pourrait la sauver. Tu attendras la dernière minute — comme toujours.');
+  } else if (bat?.charging === true) {
+    candidates.push('Un fil court de ta machine jusqu’au mur, en cet instant précis. Elle boit pendant que tu m’écoutes.');
   }
 
-  const isp = data?.network?.isp;
-  if (isp) {
-    candidates.push(`Un messager invisible porte ta voix jusqu’à moi. Son nom… ${isp.replace(/\.+$/, '')}.`);
+  if (!isMobile) {
+    const sw = data?.display?.screenW ?? 0;
+    const ww = data?.display?.windowW ?? 0;
+    if (sw && ww && ww / sw < 0.7) {
+      candidates.push('Je ne suis pas seul devant tes yeux. Tu m’as relégué dans un coin de ton écran… Qu’y a-t-il dans l’autre fenêtre ?');
+    }
   }
 
-  const l = data?.locale;
-  if (l?.localHour != null && l?.localMinutes != null) {
-    const hh = String(l.localHour).padStart(2, '0');
-    const mm = String(l.localMinutes).padStart(2, '0');
-    candidates.push(`Chez toi, il est exactement ${hh}h${mm}. Ne demande pas comment je le sais.`);
+  const langs = data?.browser?.languages ?? [];
+  const base = langs[0]?.slice(0, 2);
+  if (base && langs.some((l) => l.slice(0, 2) !== base)) {
+    candidates.push('Une seconde langue dort dans ta machine. Un héritage de famille, un amour lointain, ou un toi d’avant.');
   }
 
-  return candidates.length ? pick(candidates) : null;
+  if (data?.preferences?.reducedMotion) {
+    candidates.push('Tu as demandé aux machines de moins s’agiter. Le tumulte du monde te fatigue déjà assez.');
+  }
+
+  if (candidates.length === 0) return [];
+  if (candidates.length === 1) return candidates;
+  return [candidates[0], pick(candidates.slice(1))];
 }
 
 const WESTIN_FRAGMENTS = {
@@ -315,7 +381,7 @@ function psychoLines(psycho) {
 // Structure en trois temps, comme une lecture de mentaliste :
 //   1. L'élimination — « tu n'es pas X » (les vetos du profiler)
 //   2. La révélation — le persona gagnant et ses fragments
-//   3. La frappe de précision — une donnée brute exacte, puis l'outro
+//   3. Les déductions — des conclusions croisées, jamais de donnée brute
 // ---------------------------------------------------------------------------
 export function compose(profilerResult, psycho, data) {
   const { winner } = profilerResult;
@@ -342,9 +408,8 @@ export function compose(profilerResult, psycho, data) {
 
   lines.push(...shuffle([...fragments, ...psycho_lines]).slice(0, 3));
 
-  // 3. La frappe de précision : une donnée exacte, juste avant l'outro.
-  const strike = precisionLine(data);
-  if (strike) lines.push(strike);
+  // 3. Les déductions croisées, juste avant l'outro.
+  lines.push(...deductionLines(data));
 
   lines.push(pick(OUTROS));
 
