@@ -13,6 +13,20 @@
 
 const rule = (id, weight, test) => ({ id, weight, test });
 
+// Un veto élimine un persona quand les données le contredisent frontalement.
+// `test(d)` renvoie `null` si rien à signaler, ou une chaîne expliquant la
+// preuve (chiffrée, lisible) qui justifie l'exclusion.
+const veto = (id, test) => ({ id, test });
+
+const DAY_NAMES = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
+const isMobileDevice = (d) => {
+  const ua = (d.browser?.userAgent ?? '').toLowerCase();
+  return d.browser?.uaData?.mobile === true
+    || ua.includes('mobile') || ua.includes('android')
+    || ua.includes('iphone') || ua.includes('ipad');
+};
+
 // ---------------------------------------------------------------------------
 // Persona : L'OISEAU DE NUIT / TOURMENTÉ
 // Signaux attendus : heure locale tardive, dark mode, batterie faible,
@@ -61,6 +75,16 @@ const NIGHT_OWL = {
       d.connection?.saveData === false ? 1 : 0
     ),
   ],
+
+  vetoes: [
+    veto('plein_jour', (d) => {
+      const h = d.locale?.localHour;
+      if (h == null) return null;
+      return (h >= 8 && h < 19)
+        ? `il est ${h}h chez toi — personne ne fuit le sommeil en plein jour`
+        : null;
+    }),
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -83,6 +107,20 @@ const LANG_TO_COUNTRIES = {
   ru: ['RU', 'BY', 'KZ'],
   pl: ['PL'],
   tr: ['TR'],
+};
+
+// Cohérence fuseau horaire ↔ pays IP : true / false / null (indéterminé).
+const EU_COUNTRIES   = ['FR','DE','ES','IT','GB','BE','NL','PT','CH','AT','SE','NO','FI','DK','PL','CZ'];
+const AM_COUNTRIES   = ['US','CA','MX'];
+const ASIA_COUNTRIES = ['JP','CN','KR','TW','HK','SG','IN','TH','VN'];
+
+const tzMatchesCountry = (tz, country) => {
+  if (!tz || !country) return null;
+  const continent = tz.split('/')[0];
+  if (EU_COUNTRIES.includes(country))   return continent === 'Europe';
+  if (AM_COUNTRIES.includes(country))   return continent === 'America';
+  if (ASIA_COUNTRIES.includes(country)) return continent === 'Asia';
+  return null;
 };
 
 const TRAVELER = {
@@ -121,6 +159,23 @@ const TRAVELER = {
       if (langs.length >= 3) return 1;
       if (langs.length === 2) return 0.5;
       return 0;
+    }),
+  ],
+
+  vetoes: [
+    veto('enracine', (d) => {
+      const lang = d.browser?.language?.slice(0, 2).toLowerCase();
+      const country = d.network?.countryCode;
+      if (!lang || !country) return null;
+      const expected = LANG_TO_COUNTRIES[lang];
+      if (!expected || !expected.includes(country)) return null;
+      // Langue cohérente avec le pays. Si le fuseau l'est aussi (ou est
+      // indéterminé), tous les signaux racontent le même endroit.
+      if (tzMatchesCountry(d.locale?.timezone, country) === false) return null;
+      const monolingual = (d.browser?.languages?.length ?? 0) <= 2;
+      return monolingual
+        ? `langue « ${lang} », pays ${country} et fuseau ${d.locale?.timezone ?? '?'} racontent le même endroit`
+        : null;
     }),
   ],
 };
@@ -172,6 +227,24 @@ const PRIVILEGED = {
       return 0;
     }),
   ],
+
+  vetoes: [
+    veto('machine_modeste', (d) => {
+      const mem = d.browser?.deviceMemory;
+      const cores = d.browser?.hardwareConcurrency;
+      if (mem == null || cores == null) return null;
+      return (mem <= 4 && cores <= 4)
+        ? `${mem} Go de mémoire et ${cores} cœurs — un matériel qui compte ses pièces`
+        : null;
+    }),
+    veto('android_budget', (d) => {
+      const model = (d.browser?.uaData?.model ?? '');
+      const ua = (d.browser?.userAgent ?? '');
+      const budget = /(^|\s|\()(mi |redmi|realme|oppo|vivo|poco|honor|infinix|tecno)/i;
+      const hit = budget.test(model) ? model : (budget.test(ua) ? 'gamme budget (user-agent)' : null);
+      return hit ? `appareil détecté : ${hit} — milieu de gamme assumé` : null;
+    }),
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -212,6 +285,23 @@ const GAMER = {
       if (ua.includes('windows nt')) return 1;             // la plateforme gaming PC par excellence
       if (ua.includes('linux') && !ua.includes('android')) return 0.7;
       return 0;
+    }),
+  ],
+
+  vetoes: [
+    veto('ecran_de_poche', (d) =>
+      isMobileDevice(d)
+        ? 'appareil mobile — on ne chasse pas sur un écran de poche'
+        : null
+    ),
+    veto('soixante_hertz', (d) => {
+      const hz = d.display?.refreshHz;
+      const r = (d.gpu?.renderer ?? '').toLowerCase();
+      if (hz == null || !r) return null;
+      const integrated = r.includes('intel') && !/arc/.test(r);
+      return (hz <= 65 && integrated)
+        ? `écran ${hz} Hz et GPU intégré (${d.gpu.renderer}) — aucune arène en vue`
+        : null;
     }),
   ],
 };
@@ -267,16 +357,41 @@ const WORKER = {
       d.preferences?.darkMode === false ? 1 : 0
     ),
   ],
+
+  vetoes: [
+    veto('jour_de_repos', (d) => {
+      const day = d.locale?.dayOfWeek;
+      if (day == null) return null;
+      return (day === 0 || day === 6)
+        ? `nous sommes ${DAY_NAMES[day]} — les open spaces dorment`
+        : null;
+    }),
+    veto('hors_horaires', (d) => {
+      const h = d.locale?.localHour;
+      if (h == null) return null;
+      return (h < 7 || h >= 21)
+        ? `${h}h — aucun bureau n'est éclairé à cette heure`
+        : null;
+    }),
+    veto('nomade', (d) =>
+      isMobileDevice(d)
+        ? 'appareil mobile — pas un poste de travail fixe'
+        : null
+    ),
+  ],
 };
 
 const PERSONAS = [NIGHT_OWL, TRAVELER, PRIVILEGED, GAMER, WORKER];
 
 /**
  * Calcule les scores pour tous les personas à partir d'un rapport Collector.
+ * Les vetos sont évalués d'abord : un persona contredit par les données est
+ * exclu de la course, quelle que soit la force de ses règles positives.
  * Retourne :
  *   {
- *     scores:  [{ id, label, score, max, ratio, triggered: [ruleId,...] }],
- *     winner:  <persona le mieux classé>
+ *     scores:   [{ id, label, score, max, ratio, triggered, vetoes, excluded }],
+ *     winner:   <persona le mieux classé parmi les non-exclus>,
+ *     excluded: [<personas écartés, avec leurs raisons>]
  *   }
  */
 export function profile(report) {
@@ -293,6 +408,14 @@ export function profile(report) {
         triggered.push({ id: r.id, weight: r.weight, strength });
       }
     }
+
+    const vetoes = [];
+    for (const v of (p.vetoes ?? [])) {
+      let reason = null;
+      try { reason = v.test(report); } catch { reason = null; }
+      if (reason) vetoes.push({ id: v.id, reason });
+    }
+
     return {
       id: p.id,
       label: p.label,
@@ -301,17 +424,24 @@ export function profile(report) {
       max,
       ratio: max > 0 ? score / max : 0,
       triggered,
+      vetoes,
+      excluded: vetoes.length > 0,
     };
   });
 
-  // Le gagnant = meilleur ratio (et non score brut), pour que des personas
-  // à peu de règles puissent quand même l'emporter s'ils matchent à fond.
-  const winner = scores.reduce(
+  // Le gagnant = meilleur ratio (et non score brut) parmi les personas
+  // non contredits. Si les données contredisent tout le monde (rapport
+  // très pauvre), on retombe sur l'ensemble complet pour ne jamais
+  // laisser l'Oracle muet.
+  const pool = scores.some((s) => !s.excluded)
+    ? scores.filter((s) => !s.excluded)
+    : scores;
+  const winner = pool.reduce(
     (best, s) => (s.ratio > best.ratio ? s : best),
-    scores[0],
+    pool[0],
   );
 
-  return { scores, winner };
+  return { scores, winner, excluded: scores.filter((s) => s.excluded) };
 }
 
 export { PERSONAS };

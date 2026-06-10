@@ -88,7 +88,7 @@ const runTrance = async () => {
   lastData = await collectPromise;
   lastProfile = profile(lastData);
   lastPsycho = analyze(lastData);
-  lastScript = compose(lastProfile, lastPsycho);
+  lastScript = compose(lastProfile, lastPsycho, lastData);
 
   for (const line of lastScript.lines) {
     await showTranceLine(line);
@@ -285,9 +285,27 @@ const buildOracleEcho = (script) => {
 // Chaque bloc cite sa source académique.
 const TRAIT_ORDER = ['O', 'C', 'E', 'A', 'N'];
 
+// En dessous de ce seuil, le signal est trop faible pour oser une lecture :
+// le trait est explicitement marqué « exclu » plutôt qu'affiché avec une
+// barre quasi nulle qui laisserait croire à une mesure.
+const TRAIT_MIN_SIGNAL = 0.15;
+
 const buildBigFiveBars = (traits) => TRAIT_ORDER.map((t) => {
   const z = traits[t] ?? 0;
-  const pct = Math.round(((z + 1) / 2) * 100);   // [-1,+1] → [0,100]
+
+  if (Math.abs(z) < TRAIT_MIN_SIGNAL) {
+    return `
+      <div class="ocean-row excluded">
+        <span class="ocean-label">${TRAIT_LABELS[t]}</span>
+        <span class="ocean-track">
+          <span class="ocean-axis"></span>
+        </span>
+        <span class="ocean-z">∅</span>
+        <span class="ocean-desc">signal insuffisant — trait exclu de la lecture</span>
+      </div>
+    `;
+  }
+
   const dir = z >= 0 ? 'high' : 'low';
   const desc = TRAIT_DESCRIPTIONS[t][dir];
   const absStrong = Math.abs(z) >= 0.4;
@@ -423,17 +441,40 @@ const buildPsychometrics = (psycho) => {
 // ---------- Persona panel ----------
 const buildPersona = (prof) => {
   const w = prof.winner;
-  const scoresHtml = [...prof.scores].sort((a, b) => b.ratio - a.ratio).map((s) => {
+  // Personas en lice d'abord (triés par score), puis les écartés (barrés).
+  const sorted = [...prof.scores].sort((a, b) =>
+    (a.excluded === b.excluded) ? b.ratio - a.ratio : (a.excluded ? 1 : -1)
+  );
+  const scoresHtml = sorted.map((s) => {
     const pct = Math.round(s.ratio * 100);
-    const winner = s.id === w.id ? 'winner' : '';
+    const cls = [s.id === w.id ? 'winner' : '', s.excluded ? 'excluded' : '']
+      .filter(Boolean).join(' ');
+    const right = s.excluded ? '<span class="veto-tag">écarté</span>' : `<span>${pct}%</span>`;
     return `
-      <div class="score-row ${winner}">
+      <div class="score-row ${cls}">
         <span>${escapeHtml(s.label)}</span>
         <span class="score-bar"><span style="width:${pct}%"></span></span>
-        <span>${pct}%</span>
+        ${right}
       </div>
     `;
   }).join('');
+
+  const excluded = prof.excluded ?? [];
+  const excludedHtml = excluded.length === 0 ? '' : `
+    <div class="explain-section">
+      <h3>Pistes écartées par les données</h3>
+      <p class="veto-intro">
+        L'Oracle ne devine pas seulement qui tu es : il <em>élimine</em> qui tu
+        n'es pas. Chaque exclusion est prouvée par une donnée de ton rapport.
+      </p>
+      ${excluded.map((p) => `
+        <div class="veto-item">
+          <span class="veto-persona">${escapeHtml(p.label)}</span>
+          ${p.vetoes.map((v) => `<span class="veto-reason">${escapeHtml(v.reason)}</span>`).join('')}
+        </div>
+      `).join('')}
+    </div>
+  `;
 
   const triggered = w.triggered.length === 0
     ? '<div class="explain-item">Aucune règle n\u2019a pu s\u2019appliquer clairement.</div>'
@@ -455,6 +496,8 @@ const buildPersona = (prof) => {
       <h3>Score de tous les personas</h3>
       ${scoresHtml}
     </div>
+
+    ${excludedHtml}
 
     <div class="explain-section">
       <h3>Règles déclenchées sur ${escapeHtml(w.label)}</h3>

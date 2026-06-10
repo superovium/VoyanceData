@@ -187,6 +187,91 @@ const CONSUMER_FRAGMENTS = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Exclusions — l'art du mentaliste : affirmer ce que la personne N'EST PAS.
+// Une négation juste frappe plus fort qu'une affirmation vague, car elle
+// prouve que l'Oracle a réellement « regardé ». Chaque persona écarté par un
+// veto du profiler dispose d'une phrase de bannissement.
+// ---------------------------------------------------------------------------
+const EXCLUSION_PIVOTS = [
+  'Écartons d’abord les ombres qui ne sont pas les tiennes…',
+  'Avant de te lire, laisse-moi dire ce que tu n’es pas.',
+  'Les fausses pistes se dissipent une à une…',
+];
+
+const EXCLUSION_LINES = {
+  night_owl: [
+    'Tu n’es pas l’Oiseau de Nuit. Le soleil est encore haut dans ton ciel — je le vois à ton horloge.',
+    'Le sommeil ne te fuit pas en cet instant. Ce n’est pas la nuit qui t’amène à moi.',
+  ],
+  traveler: [
+    'Tu n’es pas l’Exilé. Ta langue, ton ciel et ta terre racontent la même histoire.',
+    'Aucune fracture entre tes mots et le lieu où tu te tiens. Tu es chez toi.',
+  ],
+  privileged: [
+    'Tu n’es pas né avec une cuillère d’argent numérique. Ta machine compte ses pièces, et toi aussi peut-être.',
+    'L’or ne brille pas entre tes mains. Ton outil est honnête, sans luxe.',
+  ],
+  gamer: [
+    'Tu n’es pas le Chasseur. Ta machine ne rugit pas — elle murmure, docile.',
+    'Aucune arène ne t’attend. Tes images défilent au rythme du commun.',
+  ],
+  worker: [
+    'Tu n’es pas au labeur. Aucune horloge de bureau ne te commande en cet instant.',
+    'Le Forçat n’est pas là. Personne ne t’attend derrière une porte vitrée aujourd’hui.',
+  ],
+};
+
+/**
+ * Lignes "tu n'es pas X" pour les personas écartés par un veto.
+ * On en garde au plus 2, en privilégiant les personas dont le score positif
+ * était pourtant élevé : nier une piste crédible est le plus spectaculaire.
+ */
+function exclusionLines(profilerResult) {
+  const excluded = (profilerResult.excluded ?? [])
+    .filter((p) => EXCLUSION_LINES[p.id])
+    .sort((a, b) => b.ratio - a.ratio)
+    .slice(0, 2);
+  if (excluded.length === 0) return [];
+  return [pick(EXCLUSION_PIVOTS), ...excluded.map((p) => pick(EXCLUSION_LINES[p.id]))];
+}
+
+// ---------------------------------------------------------------------------
+// Frappes de précision — une donnée brute, exacte, glissée dans le discours.
+// C'est le moment "comment peut-il savoir ÇA ?" : ville, batterie, FAI, heure.
+// Une seule par transe, pour ne pas banaliser l'effet.
+// ---------------------------------------------------------------------------
+function precisionLine(data) {
+  const candidates = [];
+
+  const city = data?.network?.city;
+  if (city) {
+    candidates.push(`Le vent me souffle un nom… ${city}. C’est là que ton fil touche la terre.`);
+  }
+
+  const bat = data?.battery;
+  if (bat?.level != null) {
+    const pct = Math.round(bat.level * 100);
+    candidates.push(bat.charging
+      ? `Ton talisman boit à la source en ce moment même. Il garde ${pct} parts de feu sur cent.`
+      : `Ton talisman s’épuise lentement… ${pct} parts de feu sur cent, et aucun fil pour le nourrir.`);
+  }
+
+  const isp = data?.network?.isp;
+  if (isp) {
+    candidates.push(`Un messager invisible porte ta voix jusqu’à moi. Son nom… ${isp.replace(/\.+$/, '')}.`);
+  }
+
+  const l = data?.locale;
+  if (l?.localHour != null && l?.localMinutes != null) {
+    const hh = String(l.localHour).padStart(2, '0');
+    const mm = String(l.localMinutes).padStart(2, '0');
+    candidates.push(`Chez toi, il est exactement ${hh}h${mm}. Ne demande pas comment je le sais.`);
+  }
+
+  return candidates.length ? pick(candidates) : null;
+}
+
 const WESTIN_FRAGMENTS = {
   fundamentalist: 'Tu as fermé plus de portes que tu n\u2019en as ouvertes. Ton navigateur est une forteresse. L\u2019Oracle t\u2019y reconnaît quand même.',
   pragmatist:     'Tu signales ta vigilance sans vraiment te protéger. Un geste symbolique — et l\u2019Oracle connaît le geste.',
@@ -227,12 +312,22 @@ function psychoLines(psycho) {
 
 // ---------------------------------------------------------------------------
 // Composition.
+// Structure en trois temps, comme une lecture de mentaliste :
+//   1. L'élimination — « tu n'es pas X » (les vetos du profiler)
+//   2. La révélation — le persona gagnant et ses fragments
+//   3. La frappe de précision — une donnée brute exacte, puis l'outro
 // ---------------------------------------------------------------------------
-export function compose(profilerResult, psycho) {
+export function compose(profilerResult, psycho, data) {
   const { winner } = profilerResult;
   const bank = BANK[winner.id];
 
-  const lines = [pick(INTROS), pick(bank.core)];
+  const lines = [pick(INTROS)];
+
+  // 1. Temps de l'élimination : pivots + bannissements des personas vetoés.
+  lines.push(...exclusionLines(profilerResult));
+
+  // 2. La révélation positive.
+  lines.push(pick(bank.core));
 
   // Fragments liés aux règles déclenchées du persona gagnant.
   const fragments = winner.triggered
@@ -245,7 +340,12 @@ export function compose(profilerResult, psycho) {
   // Fragments psychométriques (Big Five / conso / Westin) insérés au milieu.
   const psycho_lines = psychoLines(psycho);
 
-  lines.push(...shuffle([...fragments, ...psycho_lines]).slice(0, 4));
+  lines.push(...shuffle([...fragments, ...psycho_lines]).slice(0, 3));
+
+  // 3. La frappe de précision : une donnée exacte, juste avant l'outro.
+  const strike = precisionLine(data);
+  if (strike) lines.push(strike);
+
   lines.push(pick(OUTROS));
 
   return { persona: winner, lines };
